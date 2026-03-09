@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ツール紹介 | Marvelous Diner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#cc2929;--red-h:#aa1f1f;--bg:#fff;--bg-sec:#f5f5f5;--text:#1a1a1a;--muted:#666;--border:#e0e0e0;--r:8px;--sh:0 2px 12px rgba(0,0,0,.08);--sh-h:0 6px 24px rgba(0,0,0,.14);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans JP',sans-serif;font-weight:400;line-height:1.7;}
+.hero{text-align:center;padding:80px 24px 72px;background:var(--bg);}
+.eyebrow{font-size:.72rem;font-weight:700;letter-spacing:.18em;color:var(--red);text-transform:uppercase;margin-bottom:16px;}
+.hero-title{font-size:clamp(1.6rem,3.5vw,2.2rem);font-weight:700;margin-bottom:22px;letter-spacing:.02em;}
+.hero-body{font-size:.92rem;color:var(--muted);line-height:1.9;max-width:580px;margin:0 auto;}
+.tools-sec{background:var(--bg-sec);padding:64px 24px 110px;}
+.inner{max-width:1080px;margin:0 auto;}
+.sec-head{margin-bottom:36px;}
+.sec-title{font-size:1.6rem;font-weight:700;margin-top:6px;}
+.tab-nav{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:32px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.tab-btn{padding:11px 22px;background:transparent;border:none;border-bottom:2px solid transparent;margin-bottom:-2px;color:var(--muted);font-family:'Noto Sans JP',sans-serif;font-size:.84rem;font-weight:500;cursor:pointer;letter-spacing:.04em;white-space:nowrap;transition:color .18s,border-color .18s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red);font-weight:700;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;animation:fi .22s ease;}
+@keyframes fi{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:560px){.grid{grid-template-columns:1fr;}}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:box-shadow .24s,transform .24s,border-color .24s;display:flex;flex-direction:column;}
+.card:hover{box-shadow:var(--sh-h);transform:translateY(-3px);border-color:#bbb;}
+.card.soon{opacity:.5;pointer-events:none;}
+.thumb{height:132px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.thumb::before{content:'';position:absolute;width:78%;height:72%;background:rgba(255,255,255,.05);border-radius:4px;border:1px solid rgba(255,255,255,.12);}
+.thumb.c{background:linear-gradient(135deg,#1a2e1a,#2a4e2a);}
+.thumb.m{background:linear-gradient(135deg,#1a1e2e,#2a2e4e);}
+.thumb.r{background:linear-gradient(135deg,#2e1e1a,#4e2e2a);}
+.thumb.u{background:linear-gradient(135deg,#1a1a2e,#2a2a4e);}
+.t-icon{position:relative;z-index:1;font-size:2rem;opacity:.75;}
+.soon-badge{position:absolute;top:10px;right:10px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.75);font-size:.62rem;font-weight:700;letter-spacing:.1em;padding:3px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.2);}
+.cbody{padding:18px 18px 16px;flex:1;display:flex;flex-direction:column;}
+.brow{display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap;}
+.badge{font-size:.62rem;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:3px;background:#f0f0f0;color:var(--muted);}
+.badge-r{background:#fde8e8;color:var(--red);}
+.badge-b{background:#e8edf8;color:#2563eb;}
+.badge-g{background:#e8f5ee;color:#16a34a;}
+.badge-o{background:#fef3e8;color:#c2710c;}
+.ttag{margin-left:auto;font-size:.66rem;color:var(--muted);}
+.ctitle{font-size:.94rem;font-weight:700;line-height:1.5;margin-bottom:8px;}
+.cdesc{font-size:.77rem;color:var(--muted);line-height:1.75;flex:1;margin-bottom:14px;}
+.ccta{display:flex;align-items:center;justify-content:space-between;padding-top:13px;border-top:1px solid var(--border);margin-top:auto;}
+.cta-lnk{font-size:.76rem;font-weight:700;color:var(--red);letter-spacing:.04em;display:flex;align-items:center;gap:6px;}
+.arrow{width:21px;height:21px;border-radius:50%;border:1.5px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:.62rem;color:var(--red);transition:background .18s,color .18s;}
+.card:hover .arrow{background:var(--red);color:#fff;}
+/* featured */
+.feat{grid-column:span 2;flex-direction:row;}
+.feat .thumb{width:210px;flex-shrink:0;height:auto;min-height:150px;}
+.feat .cbody{padding:22px;}
+@media(max-width:900px){.feat{grid-column:span 1;flex-direction:column;}.feat .thumb{width:100%;height:120px;}}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;}
+.mbox{background:#f8f8f8;border:1px solid var(--border);border-radius:6px;padding:10px 12px;text-align:center;}
+.mval{font-size:1.2rem;font-weight:700;color:var(--red);}
+.mlbl{font-size:.62rem;color:var(--muted);margin-top:2px;}
+/* bottom CTA */
+.cta-bar{position:fixed;bottom:0;left:0;right:0;background:rgba(255,255,255,.97);border-top:1px solid var(--border);backdrop-filter:blur(10px);z-index:50;padding:13px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;box-shadow:0 -3px 16px rgba(0,0,0,.06);}
+.cta-bar-txt{font-size:.8rem;color:var(--muted);}
+.cta-bar-txt strong{color:var(--text);}
+.cta-bar-btn{background:var(--red);color:#fff;border:none;border-radius:6px;padding:10px 26px;font-family:'Noto Sans JP',sans-serif;font-size:.8rem;font-weight:700;letter-spacing:.06em;cursor:pointer;text-decoration:none;display:inline-block;transition:background .18s,transform .14s;}
+.cta-bar-btn:hover{background:var(--red-h);transform:translateY(-1px);}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:1000;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .24s ease;}
+.overlay.open{opacity:1;pointer-events:all;}
+.mhdr{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:#fff;border-bottom:2px solid var(--red);flex-shrink:0;gap:12px;}
+.mhdr-l{display:flex;align-items:center;gap:12px;min-width:0;}
+.mlogo{font-size:.76rem;font-weight:700;color:var(--red);letter-spacing:.06em;white-space:nowrap;}
+.msep{color:var(--border);}
+.mtitle{font-size:.83rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mhdr-r{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.btn-back{display:flex;align-items:center;gap:5px;background:transparent;border:1.5px solid var(--border);color:var(--muted);border-radius:6px;padding:7px 14px;font-family:'Noto Sans JP',sans-serif;font-size:.74rem;font-weight:500;cursor:pointer;letter-spacing:.04em;transition:all .16s;white-space:nowrap;}
+.btn-back:hover{border-color:var(--text);color:var(--text);}
+.btn-back svg{width:13px;height:13px;flex-shrink:0;}
+.btn-x{width:33px;height:33px;border-radius:50%;background:#f5f5f5;border:1px solid var(--border);color:var(--muted);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .16s;}
+.btn-x:hover{background:#fde8e8;color:var(--red);border-color:#f5c0c0;}
+.mbody{flex:1;position:relative;overflow:hidden;background:#f5f5f5;}
+.mloader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:13px;background:#f5f5f5;z-index:2;transition:opacity .28s;}
+.lring{width:38px;height:38px;border-radius:50%;border:3px solid #e0e0e0;border-top-color:var(--red);animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltxt{font-size:.7rem;color:var(--muted);letter-spacing:.12em;font-weight:500;}
+.mframe{position:absolute;inset:0;width:100%;height:100%;border:none;opacity:0;transition:opacity .32s ease;}
+.mframe.loaded{opacity:1;}
+@media(max-width:640px){.hero{padding:52px 18px 44px;}.tools-sec{padding:44px 18px 100px;}.tab-btn{padding:10px 14px;font-size:.76rem;}.cta-bar{padding:11px 16px;}.mtitle{display:none;}}
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="eyebrow">TOOLS</div>
+  <h1 class="hero-title">経営判断シミュレーター 全9種</h1>
+  <p class="hero-body">当社が開発した経営判断シミュレーターは、経営者が「数字を見て、自分で判断する」ことを可能にするツールです。すべてHTML/JavaScriptで構築。インターネット接続不要。iPadやノートPC1台で、商談の場で即座にシミュレーションが可能です。</p>
+</section>
+
+<section class="tools-sec">
+  <div class="inner">
+    <div class="sec-head">
+      <div class="eyebrow">TOOLS</div>
+      <h2 class="sec-title">ツール一覧</h2>
+    </div>
+
+    <nav class="tab-nav">
+      <button class="tab-btn active" onclick="sw('all',this)">すべて</button>
+      <button class="tab-btn" onclick="sw('con',this)">建設・工務店</button>
+      <button class="tab-btn" onclick="sw('med',this)">医療・クリニック</button>
+      <button class="tab-btn" onclick="sw('fb',this)">不動産・飲食</button>
+      <button class="tab-btn" onclick="sw('uni',this)">汎用経営判断</button>
+    </nav>
+
+    <!-- ALL -->
+    <div id="tab-all" class="tab-panel active"><div class="grid">
+      <div class="card" onclick="op('simulators/pet_renovation.html','ペット共生リノベROIシミュレーター')">
+        <div class="thumb c"><span class="t-icon">🏠</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-g">建設</span><span class="badge badge-g">賃貸管理</span><span class="ttag">約2分</span></div>
+        <div class="ctitle">ペット共生リノベROIシミュレーター</div>
+        <div class="cdesc">ペット共生リノベーションの投資回収を4年間のキャッシュフローで比較。「値下げ」と「投資」どちらが得かを可視化。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/window_renovation.html','窓リノベROI計算機（2026年版）')">
+        <div class="thumb c"><span class="t-icon">🪟</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-g">建設</span><span class="badge badge-g">補助金</span><span class="ttag">約2分</span></div>
+        <div class="ctitle">窓リノベROI計算機（2026年版）</div>
+        <div class="cdesc">窓の断熱リノベーションの補助金額・自己負担・投資回収年数を自動計算。顧客属性別試算モード対応。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/roi_2026.html','収益物件再生ROIシミュレーター')">
+        <div class="thumb c"><span class="t-icon">📊</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-g">建設</span><span class="badge badge-g">収益物件</span><span class="ttag">約3分</span></div>
+        <div class="ctitle">収益物件再生ROIシミュレーター</div>
+        <div class="cdesc">IRR・初年度CF改善・売却益インパクトを3指標で同時算出。「この改修は投資に値するか」を財務言語で即時判定。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card feat" onclick="op('simulators/medical_dashboard.html','クリニック経営戦略ダッシュボード')">
+        <div class="thumb m" style="width:210px;flex-shrink:0;height:auto;min-height:150px;"><span class="t-icon">🏥</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-b">医療</span><span class="badge badge-b">財務統合</span><span class="ttag">約5分</span></div>
+        <div class="ctitle">クリニック経営戦略ダッシュボード</div>
+        <div class="cdesc">LTV、CAC、損益分岐、施策優先度をリアルタイムで一覧管理。経営再建の「コックピット」として機能する3タブ統合ツール。</div>
+        <div class="metrics"><div class="mbox"><div class="mval">3.0×</div><div class="mlbl">LTV/CAC目標ライン</div></div><div class="mbox"><div class="mval">36ヶ月</div><div class="mlbl">CF可視化期間</div></div></div>
+        <div class="ccta" style="margin-top:12px;"><span class="cta-lnk">ダッシュボードを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/medical_pnl.html','診療報酬改定P&Lシミュレーター')">
+        <div class="thumb m"><span class="t-icon">📋</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-b">医療</span><span class="badge badge-b">2024改定</span><span class="ttag">約2分</span></div>
+        <div class="ctitle">診療報酬改定P&Lシミュレーター</div>
+        <div class="cdesc">診療報酬の改定が経営に与えるインパクトを損益計算書ベースで試算。院長がその場で意思決定できる設計。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/patient_ltv.html','患者LTV感度シミュレーター')">
+        <div class="thumb m"><span class="t-icon">📈</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-b">医療</span><span class="badge badge-b">患者戦略</span><span class="ttag">約2分</span></div>
+        <div class="ctitle">患者LTV感度シミュレーター</div>
+        <div class="cdesc">短期自費型vs混合型の生涯利益と現場負荷を対比。「量より質」戦略の数値的根拠を即時提示。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/property_management.html','不動産管理業務効率化シミュレーター')">
+        <div class="thumb r"><span class="t-icon">🏢</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-o">不動産</span><span class="badge badge-o">業務改善</span><span class="ttag">約3分</span></div>
+        <div class="ctitle">不動産管理業務効率化シミュレーター</div>
+        <div class="cdesc">工数▲65%・リードタイム▲57%の実績モデルをベースに、御社の月間削減工数・年間コスト削減額をリアルタイム算出。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/fl_simulator.html','飲食業FL比率改善シミュレーター')">
+        <div class="thumb" style="height:132px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2e1a1a,#4e2a2a);"><span class="t-icon">🍽️</span></div>
+        <div class="cbody"><div class="brow"><span class="badge badge-o">飲食</span><span class="badge badge-o">FL管理</span><span class="ttag">約3分</span></div>
+        <div class="ctitle">飲食業 FL比率改善シミュレーター</div>
+        <div class="cdesc">月商・F比率・L比率を入力するだけでFL改善後の月間・年間利益増加額を算出。業界水準との比較付き。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/investment_analyzer.html','投資回収シミュレーター（3シナリオ）')">
+        <div class="thumb u"><span class="t-icon">🎯</span></div>
+        <div class="cbody"><div class="brow"><span class="badge">汎用</span><span class="badge">3シナリオ</span><span class="ttag">約5分</span></div>
+        <div class="ctitle">投資回収シミュレーター（3シナリオ）</div>
+        <div class="cdesc">保守的・標準・積極的の3シナリオで投資回収期間を算出。感度分析により「最悪でも何年で回収できるか」を可視化。</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+      <div class="card" onclick="op('simulators/management_decision.html','クライアント別カスタムツール')">
+        <div class="thumb u"><span class="t-icon">⚙️</span></div>
+        <div class="cbody"><div class="brow"><span class="badge">汎用</span><span class="badge">カスタム</span><span class="ttag">約3分</span></div>
+        <div class="ctitle">クライアント別カスタム ツール</div>
+        <div class="cdesc">業種・課題に応じたオーダーメイドのシミュレーターを開発。（空室回転率・不動産LTV・飲食業態収益等）</div>
+        <div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div>
+      </div>
+    </div></div>
+
+    <!-- CON -->
+    <div id="tab-con" class="tab-panel"><div class="grid">
+      <div class="card" onclick="op('simulators/pet_renovation.html','ペット共生リノベROIシミュレーター')"><div class="thumb c"><span class="t-icon">🏠</span></div><div class="cbody"><div class="brow"><span class="badge badge-g">建設</span><span class="badge badge-g">賃貸管理</span><span class="ttag">約2分</span></div><div class="ctitle">ペット共生リノベROIシミュレーター</div><div class="cdesc">ペット共生リノベーションの投資回収を4年間のキャッシュフローで比較。「値下げ」と「投資」どちらが得かを可視化。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+      <div class="card" onclick="op('simulators/window_renovation.html','窓リノベROI計算機')"><div class="thumb c"><span class="t-icon">🪟</span></div><div class="cbody"><div class="brow"><span class="badge badge-g">建設</span><span class="badge badge-g">補助金</span><span class="ttag">約2分</span></div><div class="ctitle">窓リノベROI計算機（2026年版）</div><div class="cdesc">窓の断熱リノベーションの補助金額・自己負担・投資回収年数を自動計算。顧客属性別試算モード対応。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+      <div class="card" onclick="op('simulators/roi_2026.html','収益物件再生ROIシミュレーター')"><div class="thumb c"><span class="t-icon">📊</span></div><div class="cbody"><div class="brow"><span class="badge badge-g">建設</span><span class="badge badge-g">収益物件</span><span class="ttag">約3分</span></div><div class="ctitle">収益物件再生ROIシミュレーター</div><div class="cdesc">IRR・初年度CF改善・売却益インパクトを3指標で同時算出。「この改修は投資に値するか」を財務言語で即時判定。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+    </div></div>
+
+    <!-- MED -->
+    <div id="tab-med" class="tab-panel"><div class="grid">
+      <div class="card feat" onclick="op('simulators/medical_dashboard.html','クリニック経営戦略ダッシュボード')"><div class="thumb m" style="width:210px;flex-shrink:0;height:auto;min-height:150px;"><span class="t-icon">🏥</span></div><div class="cbody"><div class="brow"><span class="badge badge-b">医療</span><span class="badge badge-b">財務統合</span><span class="ttag">約5分</span></div><div class="ctitle">クリニック経営戦略ダッシュボード</div><div class="cdesc">LTV、CAC、損益分岐、施策優先度をリアルタイムで一覧管理。経営再建の「コックピット」として機能する3タブ統合ツール。</div><div class="metrics"><div class="mbox"><div class="mval">3.0×</div><div class="mlbl">LTV/CAC目標ライン</div></div><div class="mbox"><div class="mval">36ヶ月</div><div class="mlbl">CF可視化期間</div></div></div><div class="ccta" style="margin-top:12px;"><span class="cta-lnk">ダッシュボードを起動<span class="arrow">→</span></span></div></div></div>
+      <div class="card" onclick="op('simulators/medical_pnl.html','診療報酬改定P&Lシミュレーター')"><div class="thumb m"><span class="t-icon">📋</span></div><div class="cbody"><div class="brow"><span class="badge badge-b">医療</span><span class="badge badge-b">2024改定</span><span class="ttag">約2分</span></div><div class="ctitle">診療報酬改定P&Lシミュレーター</div><div class="cdesc">診療報酬の改定が経営に与えるインパクトを損益計算書ベースで試算。院長がその場で意思決定できる設計。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+      <div class="card" onclick="op('simulators/patient_ltv.html','患者LTV感度シミュレーター')"><div class="thumb m"><span class="t-icon">📈</span></div><div class="cbody"><div class="brow"><span class="badge badge-b">医療</span><span class="badge badge-b">患者戦略</span><span class="ttag">約2分</span></div><div class="ctitle">患者LTV感度シミュレーター</div><div class="cdesc">短期自費型vs混合型の生涯利益と現場負荷を対比。「量より質」戦略の数値的根拠を即時提示。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+    </div></div>
+
+    <!-- FB -->
+    <div id="tab-fb" class="tab-panel"><div class="grid">
+      <div class="card" onclick="op('simulators/property_management.html','不動産管理業務効率化シミュレーター')"><div class="thumb r"><span class="t-icon">🏢</span></div><div class="cbody"><div class="brow"><span class="badge badge-o">不動産</span><span class="badge badge-o">業務改善</span><span class="ttag">約3分</span></div><div class="ctitle">不動産管理業務効率化シミュレーター</div><div class="cdesc">工数▲65%・リードタイム▲57%の実績モデルをベースに、御社の月間削減工数・年間コスト削減額をリアルタイム算出。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+      <div class="card" onclick="op('simulators/fl_simulator.html','飲食業FL比率改善シミュレーター')"><div class="thumb" style="height:132px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#2e1a1a,#4e2a2a);"><span class="t-icon">🍽️</span></div><div class="cbody"><div class="brow"><span class="badge badge-o">飲食</span><span class="badge badge-o">FL管理</span><span class="ttag">約3分</span></div><div class="ctitle">飲食業 FL比率改善シミュレーター</div><div class="cdesc">月商・F比率・L比率を入力するだけでFL改善後の月間・年間利益増加額を算出。業界水準との比較付き。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+    </div></div>
+
+    <!-- UNI -->
+    <div id="tab-uni" class="tab-panel"><div class="grid">
+      <div class="card" onclick="op('simulators/investment_analyzer.html','投資回収シミュレーター（3シナリオ）')"><div class="thumb u"><span class="t-icon">🎯</span></div><div class="cbody"><div class="brow"><span class="badge">汎用</span><span class="badge">3シナリオ</span><span class="ttag">約5分</span></div><div class="ctitle">投資回収シミュレーター（3シナリオ）</div><div class="cdesc">保守的・標準・積極的の3シナリオで投資回収期間を算出。感度分析により「最悪でも何年で回収できるか」を可視化。</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+      <div class="card" onclick="op('simulators/management_decision.html','クライアント別カスタムツール')"><div class="thumb u"><span class="t-icon">⚙️</span></div><div class="cbody"><div class="brow"><span class="badge">汎用</span><span class="badge">カスタム</span><span class="ttag">約3分</span></div><div class="ctitle">クライアント別カスタム ツール</div><div class="cdesc">業種・課題に応じたオーダーメイドのシミュレーターを開発。（空室回転率・不動産LTV・飲食業態収益等）</div><div class="ccta"><span class="cta-lnk">シミュレーターを起動<span class="arrow">→</span></span></div></div></div>
+    </div></div>
+
+  </div>
+</section>
+
+<!-- MODAL -->
+<div class="overlay" id="modal">
+  <div class="mhdr">
+    <div class="mhdr-l">
+      <span class="mlogo">Marvelous Diner</span>
+      <span class="msep">|</span>
+      <span class="mtitle" id="mtitle">シミュレーター</span>
+    </div>
+    <div class="mhdr-r">
+      <button class="btn-back" onclick="cl()">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9,2 4,7 9,12"/></svg>
+        ツール一覧に戻る
+      </button>
+      <button class="btn-x" onclick="cl()">✕</button>
+    </div>
+  </div>
+  <div class="mbody">
+    <div class="mloader" id="mloader"><div class="lring"></div><span class="ltxt">LOADING</span></div>
+    <iframe id="mframe" class="mframe" src="" title="simulator" onload="loaded()"></iframe>
+  </div>
+</div>
+
+<!-- CTA BAR -->
+<div class="cta-bar">
+  <div class="cta-bar-txt"><strong>数値が出たら、次は実装です。</strong> シミュレーション結果をもとに、具体的な改善プランをご提案します。</div>
+  <a class="cta-bar-btn" href="/contact/">無料相談を予約する →</a>
+</div>
+
+<script>
+const modal=document.getElementById('modal'),fr=document.getElementById('mframe'),ld=document.getElementById('mloader'),ti=document.getElementById('mtitle');
+function sw(id,btn){document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById('tab-'+id).classList.add('active');btn.classList.add('active');}
+function op(src,title){fr.classList.remove('loaded');ld.style.opacity='1';ld.style.pointerEvents='all';ti.textContent=title||'シミュレーター';fr.src=src;modal.classList.add('open');document.body.style.overflow='hidden';}
+function cl(){modal.classList.remove('open');document.body.style.overflow='';setTimeout(()=>{fr.src='';fr.classList.remove('loaded');},260);}
+function loaded(){ld.style.opacity='0';ld.style.pointerEvents='none';fr.classList.add('loaded');}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&modal.classList.contains('open'))cl();});
+modal.addEventListener('click',e=>{if(e.target===modal)cl();});
+</script>
+</body>
+</html>
