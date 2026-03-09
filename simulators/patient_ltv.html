@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LTV Strategy Dashboard</title>
+    <style>
+        body { font-family: sans-serif; background: #f1f5f9; color: #1e293b; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h2 { border-left: 8px solid #2563eb; padding-left: 15px; color: #1e3a8a; margin-bottom: 30px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .control-panel { background: #f8fafc; padding: 25px; border-radius: 15px; border: 1px solid #e2e8f0; }
+        .input-group { margin-bottom: 25px; }
+        label { display: block; font-weight: bold; margin-bottom: 8px; font-size: 14px; color: #475569; }
+        .val-display { float: right; font-family: monospace; font-size: 18px; color: #2563eb; font-weight: bold; }
+        input[type="range"] { width: 100%; cursor: pointer; accent-color: #2563eb; }
+        .result-panel { display: flex; flex-direction: column; gap: 20px; }
+        .card { background: white; border: 1px solid #e2e8f0; padding: 25px; border-radius: 15px; position: relative; }
+        .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 8px; border-radius: 15px 0 0 15px; }
+        .type-a::before { background: #f43f5e; } /* 短期型：赤 */
+        .type-b::before { background: #10b981; } /* 混合型：緑 */
+        .label { font-size: 12px; font-weight: bold; color: #64748b; margin-bottom: 10px; display: block; }
+        .big-val { font-size: 40px; font-weight: 800; color: #1e293b; margin-bottom: 10px; }
+        .sub-grid { display: grid; grid-template-columns: 1fr 1fr; font-size: 13px; color: #475569; margin-top: 15px; border-top: 1px solid #f1f5f9; padding-top: 15px; }
+        .summary-box { background: #0f172a; color: white; padding: 25px; border-radius: 15px; margin-top: 20px; line-height: 1.6; }
+        .highlight { color: #60a5fa; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>患者ポートフォリオ：LTV感度シミュレーター</h2>
+    <div class="grid">
+        <div class="control-panel">
+            <div class="input-group">
+                <label>目標新患数（月） <span class="val-display" id="target_val">20</span>名</label>
+                <input type="range" id="target_n" min="1" max="100" value="20" oninput="calculate()">
+            </div>
+            <hr style="margin-bottom:25px; border:0; border-top:1px solid #e2e8f0;">
+            <div class="input-group">
+                <label>混合型（生活習慣病+自費）継続期間 <span class="val-display" id="b_ret_val">12</span>ヶ月</label>
+                <input type="range" id="b_ret" min="1" max="36" value="12" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>混合型 獲得コスト（CPA） <span class="val-display" id="b_cpa_val">8,000</span>円</label>
+                <input type="range" id="b_cpa" min="1000" max="30000" step="1000" value="8000" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>混合型 1回あたり粗利 <span class="val-display" id="b_rev_val">15,000</span>円</label>
+                <input type="range" id="b_rev" min="5000" max="30000" step="1000" value="15000" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>混合型 現場負荷（分/回） <span class="val-display" id="b_load_val">20</span>分</label>
+                <input type="range" id="b_load" min="10" max="60" value="20" oninput="calculate()">
+            </div>
+        </div>
+        
+        <div class="result-panel">
+            <div class="card type-a">
+                <span class="label">短期自費型（マンジェロのみ：継続3ヶ月/CPA 2万）</span>
+                <div class="big-val" id="a_ltv">16,000<span style="font-size:16px;">円</span></div>
+                <div class="sub-grid">
+                    <div>月間総利益: <span id="a_monthly">0</span>円</div>
+                    <div>月間現場負荷: <span id="a_total_load">0</span>分</div>
+                </div>
+            </div>
+            <div class="card type-b">
+                <span class="label">混合型（先生が診るべき優良顧客モデル）</span>
+                <div class="big-val" id="b_ltv">172,000<span style="font-size:16px;">円</span></div>
+                <div class="sub-grid">
+                    <div>月間総利益: <span id="b_monthly">0</span>円</div>
+                    <div>月間現場負荷: <span id="b_total_load">0</span>分</div>
+                </div>
+            </div>
+            <div class="summary-box" id="insight_text"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function calculate() {
+    const n = parseFloat(document.getElementById('target_n').value);
+    const b_ret = parseFloat(document.getElementById('b_ret').value);
+    const b_cpa = parseFloat(document.getElementById('b_cpa').value);
+    const b_rev = parseFloat(document.getElementById('b_rev').value);
+    const b_load = parseFloat(document.getElementById('b_load').value);
+
+    // 数値表示更新
+    document.getElementById('target_val').innerText = n;
+    document.getElementById('b_ret_val').innerText = b_ret;
+    document.getElementById('b_cpa_val').innerText = b_cpa.toLocaleString();
+    document.getElementById('b_rev_val').innerText = b_rev.toLocaleString();
+    document.getElementById('b_load_val').innerText = b_load;
+
+    // A：短期自費型（定数として比較対象に設定）
+    const a_cpa = 20000; const a_rev = 12000; const a_ret = 3; const a_load = 40;
+    const a_ltv = (a_rev * a_ret) - a_cpa;
+    const a_monthly = (a_rev - (a_cpa/a_ret)) * n;
+    const a_total_load = a_load * n;
+
+    // B：混合型（スライダー連動）
+    const b_ltv = (b_rev * b_ret) - b_cpa;
+    const b_monthly = (b_rev - (b_cpa/b_ret)) * n;
+    const b_total_load = b_load * n;
+
+    // 表示反映
+    document.getElementById('a_ltv').innerHTML = a_ltv.toLocaleString() + '<span style="font-size:16px;">円</span>';
+    document.getElementById('a_monthly').innerText = Math.floor(a_monthly).toLocaleString();
+    document.getElementById('a_total_load').innerText = a_total_load.toLocaleString();
+    
+    document.getElementById('b_ltv').innerHTML = b_ltv.toLocaleString() + '<span style="font-size:16px;">円</span>';
+    document.getElementById('b_monthly').innerText = Math.floor(b_monthly).toLocaleString();
+    document.getElementById('b_total_load').innerText = b_total_load.toLocaleString();
+
+    // Insight
+    const diff_ltv = (b_ltv / a_ltv).toFixed(1);
+    const diff_load = a_total_load - b_total_load;
+    document.getElementById('insight_text').innerHTML = 
+        `混合型を狙うことで、1人あたりの生涯利益は短期型の <span class="highlight">${diff_ltv}倍</span> に跳ね上がります。さらに、月間現場負荷は <span class="highlight">${diff_load}分</span> 削減されます。これが「量」ではなく「質」を追う、私の戦略の正体です。`;
+}
+calculate();
+</script>
+</body>
+</html>

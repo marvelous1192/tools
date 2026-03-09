@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>高度経営判断シミュレーター</title>
+    <style>
+        :root {
+            --primary: #0f172a;
+            --accent: #3b82f6;
+            --bg: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-sub: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.5;
+        }
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 100px; /* Space for fixed footer */
+        }
+        h1 {
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 24px;
+            color: var(--primary);
+        }
+
+        /* Layout Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            color: var(--primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-tag {
+            font-size: 0.75rem;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            color: var(--text-sub);
+        }
+
+        /* Inputs */
+        .input-row {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+        }
+        .range-value {
+            float: right;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* Scenario Table */
+        .scenario-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .scenario-table th {
+            text-align: left;
+            font-size: 0.8rem;
+            color: var(--text-sub);
+            padding: 8px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .scenario-table td {
+            padding: 10px 8px;
+            font-weight: bold;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .col-worst { color: var(--danger); background: #fef2f2; }
+        .col-base { color: var(--primary); }
+        .col-best { color: var(--success); background: #f0fdf4; }
+
+        /* Score Gauge */
+        .score-box {
+            text-align: center;
+            padding: 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .total-score {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+        .judgment-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+        .score-detail {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 10px;
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        /* Sticky Footer for Result */
+        .sticky-result {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: rgba(255,255,255,0.95);
+            border-top: 1px solid #cbd5e1;
+            padding: 15px 20px;
+            box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+        .mini-stat {
+            font-size: 0.8rem;
+            color: var(--text-sub);
+        }
+        .mini-val {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>経営判断・投資判定シミュレーター</h1>
+
+    <div class="score-box" id="scoreBox">
+        <div>総合判定スコア</div>
+        <div class="total-score" id="finalScore">--</div>
+        <div class="judgment-text" id="finalJudgment">計算中...</div>
+        <div class="score-detail">
+            <span>財務: <span id="scoreFin">0</span>/60</span>
+            <span>戦略: <span id="scoreStrat">0</span>/30</span>
+            <span>市場: <span id="scoreMacro">0</span>/10</span>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    1. 初期投資 & 資金 <span class="section-tag">Input</span>
+                </div>
+                <div class="input-row">
+                    <label>初期投資額 (CAPEX) [万円]</label>
+                    <input type="number" id="capex" value="1500">
+                </div>
+                <div class="input-row">
+                    <label>運転資金 (Working Capital) [万円]</label>
+                    <input type="number" id="workingCapital" value="300">
+                </div>
+                <div class="input-row">
+                    <label>自己資金比率 [%] (残りは借入)</label>
+                    <input type="number" id="equityRatio" value="30">
+                </div>
+                <div class="input-row">
+                    <label>借入金利 [%]</label>
+                    <input type="number" id="debtRate" value="2.5">
+                </div>
+                <div class="input-row">
+                    <label>期待収益率 (ハードルレート) [%]</label>
+                    <input type="number" id="hurdleRate" value="10">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    2. 収益・コスト構造 <span class="section-tag">Input</span>
+                </div>
+                <div class="input-row">
+                    <label>客単価 [円]</label>
+                    <input type="number" id="unitPrice" value="5000">
+                </div>
+                <div class="input-row">
+                    <label>月間顧客数 (Volume) [人]</label>
+                    <input type="number" id="volume" value="300">
+                </div>
+                <div class="input-row">
+                    <label>年平均成長率 (CAGR) [%]</label>
+                    <input type="number" id="cagr" value="3">
+                </div>
+                <div class="input-row">
+                    <label>変動費率 (原価率) [%]</label>
+                    <input type="number" id="variableRate" value="30">
+                </div>
+                <div class="input-row">
+                    <label>月間固定費 (人件費・家賃) [万円]</label>
+                    <input type="number" id="fixedCost" value="80">
+                </div>
+                <div class="input-row">
+                    <label>評価期間 [年]</label>
+                    <input type="number" id="years" value="5">
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    3. 戦略的整合性 (1-5) <span class="section-tag">Qualitative</span>
+                </div>
+                <div class="input-row">
+                    <label>既存事業とのシナジー <span class="range-value" id="val_syn">3</span></label>
+                    <input type="range" id="q_synergy" min="1" max="5" value="3" oninput="document.getElementById('val_syn').innerText=this.value">
+                </div>
+                <div class="input-row">
+                    <label>企業理念(MVV)適合度 <span class="range-value" id="val_mvv">3</span></label>
+                    <input type="range" id="q_mvv" min="1" max="5" value="3" oninput="document.getElementById('val_mvv').innerText=this.value">
+                </div>
+                <div class="input-row">
+                    <label>市場優位性・参入障壁 <span class="range-value" id="val_moat">3</span></label>
+                    <input type="range" id="q_moat" min="1" max="5" value="3" oninput="document.getElementById('val_moat').innerText=this.value">
+                </div>
+                <div class="input-row">
+                    <label>組織・人材の実行能力 <span class="range-value" id="val_team">3</span></label>
+                    <input type="range" id="q_team" min="1" max="5" value="3" oninput="document.getElementById('val_team').innerText=this.value">
+                </div>
+                <div class="input-row">
+                    <label>撤退の容易性 (高いほど安全) <span class="range-value" id="val_exit">3</span></label>
+                    <input type="range" id="q_exit" min="1" max="5" value="3" oninput="document.getElementById('val_exit').innerText=this.value">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    4. 外部環境 (1-5) <span class="section-tag">Macro</span>
+                </div>
+                <div class="input-row">
+                    <label>市場成長トレンド <span class="range-value" id="val_mkt">3</span></label>
+                    <input type="range" id="m_growth" min="1" max="5" value="3" oninput="document.getElementById('val_mkt').innerText=this.value">
+                </div>
+                <div class="input-row">
+                    <label>法規制リスク (高いほど安全評価) <span class="range-value" id="val_reg">3</span></label>
+                    <input type="range" id="m_legal" min="1" max="5" value="3" oninput="document.getElementById('val_reg').innerText=this.value">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    5. シナリオ別 財務分析 <span class="section-tag">Result</span>
+                </div>
+                <table class="scenario-table">
+                    <thead>
+                        <tr>
+                            <th>指標</th>
+                            <th class="col-worst">Worst<br><small>(売上70%)</small></th>
+                            <th class="col-base">Base<br><small>(計画通り)</small></th>
+                            <th class="col-best">Best<br><small>(売上120%)</small></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>NPV (正味現在価値)</td>
+                            <td id="res_npv_w" class="col-worst">--</td>
+                            <td id="res_npv_b" class="col-base">--</td>
+                            <td id="res_npv_h" class="col-best">--</td>
+                        </tr>
+                        <tr>
+                            <td>IRR (内部収益率)</td>
+                            <td id="res_irr_w" class="col-worst">--</td>
+                            <td id="res_irr_b" class="col-base">--</td>
+                            <td id="res_irr_h" class="col-best">--</td>
+                        </tr>
+                        <tr>
+                            <td>回収期間 (年)</td>
+                            <td id="res_pb_w" class="col-worst">--</td>
+                            <td id="res_pb_b" class="col-base">--</td>
+                            <td id="res_pb_h" class="col-best">--</td>
+                        </tr>
+                        <tr>
+                            <td>損益分岐点比率</td>
+                            <td colspan="3" id="res_bep" style="text-align:center;">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="sticky-result">
+    <div>
+        <div class="mini-stat">総合スコア</div>
+        <div class="mini-val" id="stickyScore">--点</div>
+    </div>
+    <div>
+        <div class="mini-stat">Base NPV</div>
+        <div class="mini-val" id="stickyNPV">--</div>
+    </div>
+    <div style="text-align: right;">
+        <div class="mini-stat">判定</div>
+        <div class="mini-val" id="stickyJudge">--</div>
+    </div>
+</div>
+
+<script>
+    // Utility functions
+    const getId = (id) => document.getElementById(id);
+    const getVal = (id) => Number(getId(id).value);
+    const fmtMoney = (n) => new Intl.NumberFormat('ja-JP').format(Math.round(n)) + '万円';
+    const fmtPct = (n) => n.toFixed(1) + '%';
+
+    function calculate() {
+        // --- 1. Gather Inputs ---
+        const capex = getVal('capex');
+        const workingCapital = getVal('workingCapital');
+        const initialOutlay = capex + workingCapital;
+        
+        const equityRatio = getVal('equityRatio') / 100;
+        const debtRate = getVal('debtRate') / 100;
+        const hurdleRate = getVal('hurdleRate') / 100;
+        
+        const unitPrice = getVal('unitPrice');
+        const volume = getVal('volume'); // monthly
+        const cagr = getVal('cagr') / 100;
+        const variableRate = getVal('variableRate') / 100;
+        const fixedCost = getVal('fixedCost'); // monthly
+        const years = getVal('years');
+
+        // WACC (Weighted Average Cost of Capital) - Simplified
+        // Assuming Equity Cost = Hurdle Rate for simplicity in this model
+        const wacc = (equityRatio * hurdleRate) + ((1 - equityRatio) * debtRate);
+
+        // --- 2. Financial Simulation Function ---
+        function runScenario(revenueModifier) {
+            let totalNPV = -initialOutlay;
+            let cashFlows = [-initialOutlay]; // Year 0
+            let cumulativeCF = -initialOutlay;
+            let paybackYear = null;
+
+            // Yearly Loop
+            for (let t = 1; t <= years; t++) {
+                // Monthly Revenue * 12 * Growth * ScenarioModifier
+                let yearlyRevenue = (unitPrice * volume * 12) * Math.pow(1 + cagr, t - 1) * revenueModifier;
+                let yearlyVariableCost = yearlyRevenue * variableRate;
+                let yearlyFixedCost = fixedCost * 12;
+                
+                // Operating Cash Flow (Simplified: EBITDA - Tax/Depreciation logic omitted for clarity as per prompt "Hard Data")
+                let yearlyCF = yearlyRevenue - yearlyVariableCost - yearlyFixedCost;
+
+                // Discount CF
+                totalNPV += yearlyCF / Math.pow(1 + wacc, t);
+                
+                // Payback Logic
+                if (paybackYear === null) {
+                    cumulativeCF += yearlyCF;
+                    if (cumulativeCF >= 0) {
+                        // Fraction calculation
+                        let prevCF = cumulativeCF - yearlyCF;
+                        paybackYear = (t - 1) + (Math.abs(prevCF) / yearlyCF);
+                    }
+                }
+                
+                cashFlows.push(yearlyCF);
+            }
+
+            // IRR Approximation
+            let irr = 0;
+            // Simple iterative guess
+            let min = -1.0;
+            let max = 1.0;
+            for(let i=0; i<20; i++) {
+                let guess = (min + max) / 2;
+                let npvGuess = 0;
+                for(let t=0; t<cashFlows.length; t++) {
+                    npvGuess += cashFlows[t] / Math.pow(1+guess, t);
+                }
+                if(npvGuess > 0) min = guess;
+                else max = guess;
+                irr = guess;
+            }
+
+            return { npv: totalNPV, irr: irr, payback: paybackYear };
+        }
+
+        // Run 3 Scenarios
+        const worst = runScenario(0.7); // 70% Revenue
+        const base = runScenario(1.0);  // 100% Revenue
+        const best = runScenario(1.2);  // 120% Revenue
+
+        // BEP Calculation (Base case Year 1)
+        const baseRevY1 = (unitPrice * volume * 12);
+        const fixedY1 = fixedCost * 12;
+        const marginalProfitRatio = 1 - variableRate;
+        const bepSales = fixedY1 / marginalProfitRatio;
+        const bepRatio = (bepSales / baseRevY1) * 100;
+
+        // --- 3. Scoring Logic (Weighted Average) ---
+        
+        // A. Financial Score (Max 60)
+        let finScore = 0;
+        if (base.npv > 0) finScore += 20; // Positive NPV
+        if (base.irr > hurdleRate) finScore += 20; // IRR > Hurdle
+        if (base.payback !== null && base.payback <= 3) finScore += 20; // Payback < 3y
+        else if (base.payback !== null && base.payback <= 5) finScore += 10;
+        
+        // Penalty for Worst Case Death
+        if (worst.npv < -initialOutlay * 0.5) finScore -= 10; // Huge loss warning
+
+        // B. Strategic Score (Max 30)
+        // Ave of 5 items (1-5 scale) -> Map to 30
+        const qSum = getVal('q_synergy') + getVal('q_mvv') + getVal('q_moat') + getVal('q_team') + getVal('q_exit');
+        const stratScore = (qSum / 25) * 30;
+
+        // C. Macro Score (Max 10)
+        const mSum = getVal('m_growth') + getVal('m_legal');
+        const macroScore = (mSum / 10) * 10;
+
+        const totalScore = Math.min(100, Math.max(0, Math.round(finScore + stratScore + macroScore)));
+
+        // --- 4. Update UI ---
+        
+        // Table Update
+        const renderCell = (id, val, isMoney, isPct) => {
+            const el = getId(id);
+            if (val === null) {
+                el.innerText = "回収不能";
+                return;
+            }
+            if (isMoney) el.innerText = fmtMoney(val);
+            else if (isPct) el.innerText = fmtPct(val * 100);
+            else el.innerText = val.toFixed(1);
+        };
+
+        renderCell('res_npv_w', worst.npv, true, false);
+        renderCell('res_npv_b', base.npv, true, false);
+        renderCell('res_npv_h', best.npv, true, false);
+
+        renderCell('res_irr_w', worst.irr, false, true);
+        renderCell('res_irr_b', base.irr, false, true);
+        renderCell('res_irr_h', best.irr, false, true);
+
+        renderCell('res_pb_w', worst.payback, false, false);
+        renderCell('res_pb_b', base.payback, false, false);
+        renderCell('res_pb_h', best.payback, false, false);
+
+        getId('res_bep').innerText = `損益分岐点売上: ${fmtMoney(bepSales)} (対計画比: ${bepRatio.toFixed(1)}%)`;
+
+        // Score Update
+        getId('finalScore').innerText = totalScore;
+        getId('scoreFin').innerText = Math.round(finScore);
+        getId('scoreStrat').innerText = Math.round(stratScore);
+        getId('scoreMacro').innerText = Math.round(macroScore);
+        
+        getId('stickyScore').innerText = totalScore + '点';
+        getId('stickyNPV').innerText = fmtMoney(base.npv);
+
+        // Judgment Logic
+        const box = getId('scoreBox');
+        const judgeText = getId('finalJudgment');
+        const stickyJudge = getId('stickyJudge');
+        
+        if (totalScore >= 80) {
+            box.style.background = "#10b981"; // Green
+            judgeText.innerText = "✅ 即決 (Go)";
+            stickyJudge.innerText = "即決 (Go)";
+            stickyJudge.style.color = "#10b981";
+        } else if (totalScore >= 60) {
+            box.style.background = "#f59e0b"; // Orange
+            judgeText.innerText = "⚠️ 条件付きGo";
+            stickyJudge.innerText = "条件付きGo";
+            stickyJudge.style.color = "#f59e0b";
+        } else {
+            box.style.background = "#ef4444"; // Red
+            judgeText.innerText = "❌ 却下 (No-Go)";
+            stickyJudge.innerText = "却下";
+            stickyJudge.style.color = "#ef4444";
+        }
+    }
+
+    // Attach listeners
+    const inputs = document.querySelectorAll('input, select');
+    inputs.forEach(input => {
+        input.addEventListener('input', calculate);
+    });
+
+    // Initial calc
+    calculate();
+</script>
+
+</body>
+</html>

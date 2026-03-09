@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2024改定：完全カスタマイズ損益シミュレーター</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f2f2f7; margin: 0; padding: 15px; color: #1c1c1e; }
+        .container { max-width: 650px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        h1 { font-size: 18px; color: #007aff; margin: 0 0 15px 0; display: flex; align-items: center; }
+        h2 { font-size: 13px; color: #8e8e93; margin: 15px 0 10px 0; text-transform: uppercase; letter-spacing: 1px; }
+        
+        .control-group { margin-bottom: 18px; }
+        .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        label { font-size: 13px; font-weight: bold; color: #3a3a3c; }
+        .current-value { font-size: 14px; font-weight: bold; color: #007aff; background: #e5f1ff; padding: 2px 10px; border-radius: 10px; }
+        
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 8px; background: #d1d1d6; border-radius: 4px; outline: none; margin: 10px 0; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; background: #fff; border: 0.5px solid #d1d1d6; border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15); cursor: pointer; }
+
+        .result-panel { background: #1c1c1e; color: white; padding: 25px; border-radius: 24px; text-align: center; }
+        .result-main { font-size: 38px; font-weight: bold; color: #32d74b; margin: 10px 0; }
+        .comparison { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; border-top: 1px solid #3a3a3c; margin-top: 15px; padding-top: 15px; }
+        .comp-val { font-size: 15px; font-weight: bold; display: block; margin-top: 4px; }
+        .diff-tag { font-size: 13px; padding: 6px 16px; border-radius: 20px; margin-top: 10px; display: inline-block; font-weight: bold; }
+        .negative-bg { background: #ff453a; color: white; }
+        .positive-bg { background: #32d74b; color: white; }
+        .footer-note { font-size: 10px; color: #8e8e93; margin-top: 12px; text-align: center; line-height: 1.4; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>完全カスタマイズ・シミュレーター</h1>
+        
+        <h2>A. 診療実績とベース単価</h2>
+        <div class="control-group">
+            <div class="label-row"><label>月間対象患者数</label><span class="current-value" id="val_pts">500</span></div>
+            <input type="range" id="pts" min="50" max="2000" step="50" value="500" oninput="calc()">
+        </div>
+        <div class="control-group">
+            <div class="label-row"><label>基本診療収益（再診料・処方・検査等 / 点）</label><span class="current-value" id="val_baseRev">700</span></div>
+            <input type="range" id="baseRev" min="300" max="1500" step="50" value="700" oninput="calc()">
+        </div>
+
+        <h2>B. 改定対応・運用戦略</h2>
+        <div class="control-group">
+            <div class="label-row"><label>管理料I 移行率 (%)</label><span class="current-value" id="val_ratioI">30</span></div>
+            <input type="range" id="ratioI" min="0" max="100" step="5" value="30" oninput="calc()">
+        </div>
+        <div class="control-group">
+            <div class="label-row"><label>事務追加コスト（計画書作成等 / 万円）</label><span class="current-value" id="val_admin">10</span></div>
+            <input type="range" id="admin" min="0" max="100" step="5" value="10" oninput="calc()">
+        </div>
+
+        <h2>C. 財務・固定費構造</h2>
+        <div class="control-group">
+            <div class="label-row"><label>月間ベース人件費（万円）</label><span class="current-value" id="val_labor">500</span></div>
+            <input type="range" id="labor" min="100" max="2000" step="50" value="500" oninput="calc()">
+        </div>
+        <div class="control-group">
+            <div class="label-row"><label>賃上げ実施率 (%)</label><span class="current-value" id="val_wage">2.5</span></div>
+            <input type="range" id="wage" min="0" max="10.0" step="0.5" value="2.5" oninput="calc()">
+        </div>
+    </div>
+
+    <div class="result-panel">
+        <div style="font-size: 13px; color: #a1a1aa;">改定後：月間想定純利益</div>
+        <div class="result-main">¥ <span id="res_active">0</span></div>
+        <div id="diff_tag" class="diff-tag">前月比 -000,000円</div>
+        
+        <div class="comparison">
+            <div>
+                <span style="font-size: 11px; color: #a1a1aa;">改定前</span>
+                <span class="comp-val">¥<span id="res_old">0</span></span>
+            </div>
+            <div>
+                <span style="font-size: 11px; color: #a1a1aa;">利益率</span>
+                <span class="comp-val"><span id="res_margin">0</span>%</span>
+            </div>
+            <div>
+                <span style="font-size: 11px; color: #a1a1aa;">1人あたり利益</span>
+                <span class="comp-val">¥<span id="res_per_pt">0</span></span>
+            </div>
+        </div>
+    </div>
+    <p class="footer-note">※来院1.5回/月、医療DX・ベア加算（計10点）算定済みとして計算。<br>基本診療収益は管理料を除いた1回あたりの平均点数です。</p>
+</div>
+
+<script>
+    function calc() {
+        const pts = parseInt(document.getElementById('pts').value);
+        const baseRevPts = parseInt(document.getElementById('baseRev').value);
+        const ratioI = parseInt(document.getElementById('ratioI').value) / 100;
+        const admin = parseInt(document.getElementById('admin').value) * 10000;
+        const laborBase = parseInt(document.getElementById('labor').value) * 10000;
+        const wage = parseFloat(document.getElementById('wage').value) / 100;
+
+        // 数値表示更新
+        document.getElementById('val_pts').innerText = pts + " 名";
+        document.getElementById('val_baseRev').innerText = baseRevPts + " 点";
+        document.getElementById('val_ratioI').innerText = (ratioI * 100).toFixed(0) + " %";
+        document.getElementById('val_admin').innerText = (admin / 10000) + " 万円";
+        document.getElementById('val_labor').innerText = (laborBase / 10000) + " 万円";
+        document.getElementById('val_wage').innerText = (wage * 100).toFixed(1) + " %";
+
+        const freq = 1.5;
+
+        // 改定前
+        const revOld = (pts * freq * (225 + baseRevPts)) * 10;
+        const netOld = revOld - laborBase;
+
+        // 改定後
+        const mgtPart = (pts * ratioI * 610) + (pts * (1 - ratioI) * 333);
+        const addPart = (pts * freq * 10);
+        const basePart = (pts * freq * baseRevPts);
+        
+        const revActive = (mgtPart + addPart + basePart) * 10;
+        const costActive = (laborBase * (1 + wage)) + admin;
+        const netActive = revActive - costActive;
+
+        const diff = netActive - netOld;
+        const margin = (netActive / revActive) * 100;
+
+        // 結果反映
+        document.getElementById('res_active').innerText = Math.round(netActive).toLocaleString();
+        document.getElementById('res_old').innerText = Math.round(netOld).toLocaleString();
+        document.getElementById('res_margin').innerText = margin.toFixed(1);
+        document.getElementById('res_per_pt').innerText = Math.round(netActive / pts).toLocaleString();
+        
+        const diffTag = document.getElementById('diff_tag');
+        diffTag.innerText = "前月比 " + (diff >= 0 ? "+" : "") + Math.round(diff).toLocaleString() + " 円";
+        diffTag.className = "diff-tag " + (diff >= 0 ? "positive-bg" : "negative-bg");
+    }
+    calc();
+</script>
+</body>
+</html>

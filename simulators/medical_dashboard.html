@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>医療財務統合ダッシュボード | Marvelous Diner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,600;1,300&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --deep:   #1a1a2e;
+  --panel:  #1e1e38;
+  --panel2: #232344;
+  --gold:   #c8a45c;
+  --gold2:  #e8c47c;
+  --green:  #10b981;
+  --red:    #ef4444;
+  --blue:   #3b82f6;
+  --text:   #f0ede6;
+  --muted:  #8a8aaa;
+  --border: rgba(200,164,92,0.18);
+  --r: 14px;
+}
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+
+body {
+  background: var(--deep);
+  color: var(--text);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-weight: 300;
+  min-height: 100vh;
+  padding: 0;
+}
+
+/* ── Top Gold Line ── */
+body::before {
+  content:''; position:fixed; top:0; left:0; right:0; height:2px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  z-index:100;
+}
+
+/* ── Header ── */
+.hdr {
+  background: linear-gradient(180deg, #12122a 0%, var(--deep) 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 18px 28px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 10px;
+}
+
+.hdr-left { display:flex; align-items:center; gap:16px; }
+
+.brand {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 0.72rem; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--gold); border: 1px solid var(--border);
+  padding: 4px 12px; border-radius: 999px;
+}
+
+.hdr-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.1rem; font-weight: 300;
+  letter-spacing: 0.04em;
+}
+
+.hdr-title em { font-style:italic; color:var(--gold); }
+
+.hdr-tag {
+  font-size: 0.68rem; color: var(--muted);
+  letter-spacing: 0.1em; text-transform: uppercase;
+}
+
+/* ── Tab Nav ── */
+.tab-nav {
+  display: flex; gap: 3px;
+  padding: 12px 28px 0;
+  background: var(--deep);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+
+.t-btn {
+  padding: 10px 22px 12px;
+  background: transparent;
+  border: none; border-bottom: 2px solid transparent;
+  color: var(--muted);
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.06em; cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.t-btn:hover { color: var(--text); }
+.t-btn.active { color: var(--gold); border-bottom-color: var(--gold); font-weight: 700; }
+
+/* ── Main Area ── */
+.main { padding: 24px 28px 40px; }
+
+.view { display:none; }
+.view.active { display:block; animation: fadeUp 0.3s ease; }
+
+@keyframes fadeUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+/* ── Grid Layouts ── */
+.two-col { display: grid; grid-template-columns: 340px 1fr; gap: 20px; }
+.three-col { display: grid; grid-template-columns: 340px 1fr 200px; gap: 20px; }
+
+@media (max-width: 900px) {
+  .two-col, .three-col { grid-template-columns: 1fr; }
+}
+
+/* ── Panel ── */
+.pnl {
+  background: var(--panel);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--r);
+  padding: 22px;
+}
+
+.pnl-title {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.pnl-title::before {
+  content:''; display:inline-block; width:12px; height:1px;
+  background: var(--gold);
+}
+
+/* ── Slider ── */
+.ctrl { margin-bottom: 20px; }
+
+.ctrl-row {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 7px;
+}
+
+.ctrl-label { font-size: 0.78rem; color: var(--muted); font-weight: 400; }
+
+.ctrl-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.3rem; font-weight: 600; color: var(--gold);
+}
+
+input[type=range] {
+  -webkit-appearance: none; width: 100%; height: 4px;
+  background: rgba(255,255,255,0.1); border-radius:999px; outline:none;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 22px; height: 22px;
+  background: var(--gold); border: 2px solid var(--deep);
+  border-radius: 50%; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(200,164,92,0.4);
+}
+
+/* ── KPI Cards ── */
+.kpi-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+
+.kpi {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px; padding: 16px;
+  text-align: center;
+}
+
+.kpi-label { font-size: 0.65rem; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.06em; }
+.kpi-val { font-family: 'Cormorant Garamond', serif; font-size: 1.6rem; font-weight: 600; }
+
+/* ── Chart ── */
+.chart-wrap {
+  background: rgba(0,0,0,0.25);
+  border-radius: 10px; padding: 14px;
+  border: 1px solid rgba(255,255,255,0.05);
+  margin-bottom: 14px;
+}
+
+.chart-head {
+  display: flex; justify-content: space-between;
+  font-size: 0.65rem; color: var(--muted);
+  margin-bottom: 10px; font-weight: 700; letter-spacing: 0.08em;
+}
+
+svg.chart { width: 100%; height: 130px; overflow: visible; }
+
+/* ── Ratio Card ── */
+.ratio-card {
+  border-radius: 12px; padding: 22px;
+  text-align: center; transition: background 0.5s;
+}
+
+.ratio-label { font-size: 0.65rem; opacity: 0.8; margin-bottom: 8px; letter-spacing: 0.08em; }
+.ratio-val { font-family: 'Cormorant Garamond', serif; font-size: 3.5rem; font-weight: 300; }
+.ratio-status { font-size: 0.7rem; font-weight: 700; margin-top: 6px; letter-spacing: 0.12em; }
+
+/* ── Insight Box ── */
+.insight {
+  background: rgba(0,0,0,0.3);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 10px 10px 0;
+  padding: 16px 18px;
+  font-size: 0.78rem; line-height: 1.8;
+  color: var(--muted); margin-top: 16px;
+}
+
+.insight strong { color: var(--text); }
+.hi { color: var(--gold); font-weight: 700; }
+.hi-g { color: var(--green); font-weight: 700; }
+.hi-r { color: var(--red); font-weight: 700; }
+
+/* ── Opportunity Cost Tab ── */
+.opp-main {
+  background: rgba(0,0,0,0.3);
+  border-radius: 12px; padding: 24px;
+  text-align: center; margin-bottom: 18px;
+}
+
+.opp-sub { font-size: 0.72rem; color: var(--muted); margin-bottom: 8px; }
+.opp-val { font-family: 'Cormorant Garamond', serif; font-size: 3.6rem; font-weight: 300; color: var(--red); }
+
+.bar-wrap { margin-top: 16px; }
+
+.bar-row {
+  display: flex; align-items: center; gap: 12px; margin-bottom: 10px;
+}
+
+.bar-lbl { width: 70px; font-size: 0.72rem; color: var(--muted); text-align:right; flex-shrink:0; }
+.bar-bg { flex:1; height: 32px; background: rgba(255,255,255,0.05); border-radius: 6px; overflow:hidden; }
+.bar-fill {
+  height: 100%; display:flex; align-items:center;
+  padding-left: 12px; font-size: 0.72rem; font-weight: 700;
+  transition: width 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  border-radius: 6px;
+}
+
+/* ── Section Divider ── */
+.sdiv { height:1px; background: rgba(255,255,255,0.06); margin: 22px 0; }
+
+/* ── CTA Bottom ── */
+.cta-row {
+  margin-top: 28px; padding: 20px 24px;
+  background: linear-gradient(135deg, rgba(200,164,92,0.08), rgba(200,164,92,0.03));
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+}
+
+.cta-text { font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+.cta-text strong { color: var(--text); }
+
+.cta-btn {
+  background: var(--gold); color: var(--deep);
+  border: none; border-radius: 8px;
+  padding: 12px 28px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 0.8rem; font-weight: 700;
+  letter-spacing: 0.06em; cursor: pointer;
+  text-decoration: none; display: inline-block;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.cta-btn:hover { background: var(--gold2); transform: translateY(-1px); }
+
+/* ── SCR View ── */
+.scr-big {
+  background: rgba(0,0,0,0.3); border-radius: 12px;
+  padding: 28px; text-align: center; margin-bottom: 16px;
+}
+
+.scr-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 4rem; font-weight: 300; line-height: 1;
+  margin-top: 8px;
+}
+
+.impact-card {
+  background: var(--panel2); border-radius: 12px;
+  padding: 22px; text-align: center;
+}
+
+.impact-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.8rem; font-weight: 300;
+  margin-top: 8px;
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <div class="hdr-left">
+    <span class="brand">Marvelous Diner</span>
+    <span class="hdr-title">医療財務統合 <em>Dashboard</em></span>
+  </div>
+  <span class="hdr-tag">Medical Finance · Strategic Analysis</span>
+</div>
+
+<!-- TAB NAV -->
+<div class="tab-nav">
+  <button class="t-btn active" onclick="sw('cf',this)">01 ｜ 財務再建シミュレーション</button>
+  <button class="t-btn"        onclick="sw('opp',this)">02 ｜ 経営資源配分（機会損失）</button>
+  <button class="t-btn"        onclick="sw('scr',this)">03 ｜ 経営主導権（SCR）分析</button>
+</div>
+
+<div class="main">
+
+<!-- ════════════════════════════════
+     VIEW 1 : 財務再建シミュレーション
+════════════════════════════════ -->
+<div id="v-cf" class="view active">
+  <div class="three-col">
+
+    <!-- 左：入力 -->
+    <div class="pnl">
+      <div class="pnl-title">パラメーター設定</div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">新規慢性疾患 / 月</span>
+          <span class="ctrl-val" id="c_out">5.0 名</span>
+        </div>
+        <input type="range" id="c_in" min="0.5" max="15" step="0.5" value="5" oninput="calcCF()">
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">新規自費（マンジャロ）/ 月</span>
+          <span class="ctrl-val" id="m_out" style="color:var(--green)">5 名</span>
+        </div>
+        <input type="range" id="m_in" min="0" max="27" step="1" value="5" oninput="calcCF()">
+      </div>
+
+      <div class="sdiv"></div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">想定通院継続年数（感度分析）</span>
+          <span class="ctrl-val" id="y_out" style="color:#f59e0b">10.0 年</span>
+        </div>
+        <input type="range" id="y_in" min="1" max="15" step="0.5" value="10" oninput="calcCF()">
+        <div style="font-size:0.65rem; color:var(--muted); margin-top:6px; line-height:1.6;">
+          楽観的と感じる場合は左へ。感度を確認することが目的です。
+        </div>
+      </div>
+
+      <div class="sdiv"></div>
+
+      <div style="background:rgba(200,164,92,0.06); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:0.72rem; line-height:1.8; color:var(--muted);">
+        <div style="color:var(--gold); font-weight:700; margin-bottom:8px; font-size:0.68rem; letter-spacing:0.1em;">前提条件（固定値）</div>
+        既往負債 ¥10,000,000<br>
+        初期コンサル費 ¥500,000<br>
+        月間運営費 ¥400,000<br>
+        慢性疾患 限界利益 ¥5,600/月<br>
+        自費（マンジャロ）利益 ¥15,000/件
+      </div>
+    </div>
+
+    <!-- 中央：CF推移 -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="kpi-row">
+        <div class="kpi">
+          <div class="kpi-label">負債完済時期</div>
+          <div class="kpi-val" id="pb_out" style="color:var(--gold)">-- ヶ月</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">12ヶ月時点 累積収支</div>
+          <div class="kpi-val" id="p12_out" style="color:var(--green)">¥0</div>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-head">
+          <span>累積キャッシュフロー推移（36ヶ月）</span>
+          <span>BEP = ¥0</span>
+        </div>
+        <svg class="chart" id="cf_svg" viewBox="0 0 500 130" preserveAspectRatio="none"></svg>
+      </div>
+
+      <div class="insight" id="cf_insight">
+        スライダーを動かすと分析結果が表示されます。
+      </div>
+    </div>
+
+    <!-- 右：Unit Economics -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="pnl" style="text-align:center;">
+        <div class="pnl-title" style="justify-content:center;">獲得単価 (CAC)</div>
+        <div style="font-family:'Cormorant Garamond',serif; font-size:1.8rem; font-weight:300; color:var(--text);" id="cac_out">¥---</div>
+        <div style="font-size:0.65rem; color:var(--muted); margin-top:4px;">月間運営費 ÷ 新規慢性疾患数</div>
+      </div>
+
+      <div class="ratio-card" id="ratio_card" style="background:var(--red);">
+        <div class="ratio-label">LTV / CAC 比率</div>
+        <div class="ratio-val" id="ratio_out">0.0</div>
+        <div class="ratio-status" id="ratio_status">ANALYZING</div>
+        <div style="font-size:0.62rem; opacity:0.7; margin-top:10px; line-height:1.5;">目標ライン：3.0以上<br>限界利益率 70% 適用</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     VIEW 2 : 経営資源配分（機会損失）
+════════════════════════════════ -->
+<div id="v-opp" class="view">
+  <div class="two-col">
+
+    <!-- 左：入力 -->
+    <div class="pnl">
+      <div class="pnl-title">院長の時間価値設定</div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">院長の人的資本（時給価値）</span>
+          <span class="ctrl-val" id="h_out">¥50,000</span>
+        </div>
+        <input type="range" id="h_in" min="10000" max="150000" step="5000" value="50000" oninput="calcOpp()">
+        <div style="font-size:0.65rem; color:var(--muted); margin-top:5px;">診療1時間あたりの収益貢献額を目安として入力</div>
+      </div>
+
+      <div class="sdiv"></div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">月間「非診療」実務時間</span>
+          <span class="ctrl-val" id="t_out" style="color:#f59e0b">20 h</span>
+        </div>
+        <input type="range" id="t_in" min="2" max="60" step="1" value="20" oninput="calcOpp()">
+        <div style="font-size:0.65rem; color:var(--muted); margin-top:5px; line-height:1.6;">
+          AIプロンプト作成・Web入稿・構造化データ検証・会議資料作成等の合計時間
+        </div>
+      </div>
+
+      <div class="sdiv"></div>
+
+      <div style="background:rgba(200,164,92,0.06); border:1px solid var(--border); border-radius:10px; padding:14px; font-size:0.72rem; line-height:1.8; color:var(--muted);">
+        <div style="color:var(--gold); font-weight:700; margin-bottom:6px; font-size:0.68rem; letter-spacing:0.1em;">比較基準</div>
+        戦略的アウトソーシング想定コスト：¥400,000 / 月<br>
+        上記との差分が「創出できる経営判断時間」の価値です。
+      </div>
+    </div>
+
+    <!-- 右：結果 -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="opp-main">
+        <div class="opp-sub">人的資源の誤配分による月間機会損失</div>
+        <div class="opp-val" id="loss_out">¥0</div>
+      </div>
+
+      <div class="bar-wrap">
+        <div class="bar-row">
+          <span class="bar-lbl">セルフ実務</span>
+          <div class="bar-bg"><div id="bar_d" class="bar-fill" style="background:var(--red); width:0%"></div></div>
+        </div>
+        <div class="bar-row">
+          <span class="bar-lbl">外部委託</span>
+          <div class="bar-bg"><div id="bar_s" class="bar-fill" style="background:var(--green); width:40%">¥400,000</div></div>
+        </div>
+      </div>
+
+      <div class="insight" id="opp_insight">
+        スライダーを動かすと分析結果が表示されます。
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     VIEW 3 : 経営主導権（SCR）分析
+════════════════════════════════ -->
+<div id="v-scr" class="view">
+  <div class="two-col">
+
+    <!-- 左：入力 -->
+    <div class="pnl">
+      <div class="pnl-title">クリニック財務データ</div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">保険診療 収益 / 月</span>
+          <span class="ctrl-val" id="ins_out">600 万円</span>
+        </div>
+        <input type="range" id="ins_in" min="100" max="1500" step="10" value="600" oninput="calcSCR()">
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">全固定費 / 月</span>
+          <span class="ctrl-val" id="fix_out">300 万円</span>
+        </div>
+        <input type="range" id="fix_in" min="100" max="800" step="10" value="300" oninput="calcSCR()">
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">自由診療 粗利 / 1人</span>
+          <span class="ctrl-val" id="pu_out">¥12,000</span>
+        </div>
+        <input type="range" id="pu_in" min="5000" max="50000" step="1000" value="12000" oninput="calcSCR()">
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">現在の自由診療 患者数 / 月</span>
+          <span class="ctrl-val" id="pc_out" style="color:var(--green)">2 名</span>
+        </div>
+        <input type="range" id="pc_in" min="0" max="100" step="1" value="2" oninput="calcSCR()">
+      </div>
+
+      <div class="ctrl">
+        <div class="ctrl-row">
+          <span class="ctrl-label">診療報酬改定 変動率</span>
+          <span class="ctrl-val" id="rate_out" style="color:#f59e0b">0.0 %</span>
+        </div>
+        <input type="range" id="rate_in" min="-10" max="10" step="0.1" value="0.0" oninput="calcSCR()">
+        <div style="display:flex; justify-content:space-between; font-size:0.6rem; color:var(--muted); margin-top:4px;">
+          <span>← 減収（特定疾患除外等）</span>
+          <span>増収（生活習慣病管理料増） →</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：SCR + Impact -->
+    <div style="display:flex; flex-direction:column; gap:16px;">
+      <div class="scr-big">
+        <div style="font-size:0.68rem; color:var(--muted); letter-spacing:0.12em; text-transform:uppercase;">経営自律性指標（SCR）</div>
+        <div class="scr-val" id="scr_val">0.0<span style="font-size:1.5rem">%</span></div>
+        <div style="font-size:0.72rem; color:var(--muted); margin-top:10px; line-height:1.7;">
+          自由診療収益が固定費をカバーする力です。<br>
+          SCRが低いほど、国の点数改定に経営が支配されます。
+        </div>
+      </div>
+
+      <div class="impact-card">
+        <div style="font-size:0.68rem; color:var(--muted); letter-spacing:0.1em;" id="impact_label">改定による収益変動</div>
+        <div class="impact-val" id="impact_val">± 0円</div>
+        <div style="font-size:0.75rem; color:var(--muted); margin-top:12px; line-height:1.7;" id="impact_note"></div>
+      </div>
+
+      <div class="insight" id="scr_insight"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-row">
+  <div class="cta-text">
+    <strong>この数値を実現する具体策を、個別にご提案します。</strong><br>
+    シミュレーション結果をそのまま持参いただければ、改善ロードマップを当日提示します。
+  </div>
+  <a class="cta-btn" href="/contact/">無料相談を予約する →</a>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ==========================================
+//  定数
+// ==========================================
+const DEBT=10000000, INIT=500000, OPEX=400000;
+const MGN_C=5600, MGN_M=15000;
+
+// ==========================================
+//  TAB切替
+// ==========================================
+function sw(id, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('v-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ==========================================
+//  VIEW 1: 財務再建CF
+// ==========================================
+function calcCF() {
+  const c = parseFloat(document.getElementById('c_in').value);
+  const m = parseInt(document.getElementById('m_in').value);
+  const y = parseFloat(document.getElementById('y_in').value);
+
+  document.getElementById('c_out').innerText  = c.toFixed(1) + ' 名';
+  document.getElementById('m_out').innerText  = m + ' 名';
+  document.getElementById('y_out').innerText  = y.toFixed(1) + ' 年';
+
+  // Unit Economics
+  const cac   = OPEX / c;
+  const ltv   = MGN_C * 12 * y;
+  const ratio = ltv / cac;
+
+  document.getElementById('cac_out').innerText   = '¥' + Math.floor(cac).toLocaleString();
+  document.getElementById('ratio_out').innerText = ratio.toFixed(1);
+
+  const rc = document.getElementById('ratio_card');
+  const rs = document.getElementById('ratio_status');
+  if (ratio >= 5.0)      { rc.style.background='#059669'; rs.innerText='EXCELLENT ROI'; }
+  else if (ratio >= 3.0) { rc.style.background='#2563eb'; rs.innerText='HEALTHY INVESTMENT'; }
+  else                   { rc.style.background='#dc2626'; rs.innerText='LOW EFFICIENCY'; }
+
+  // CF Simulation (36m)
+  let cum = -DEBT - INIT;
+  let p12 = -INIT;
+  let totC = 0, pb = -1;
+  const pts = [];
+
+  for (let i = 1; i <= 36; i++) {
+    totC += c;
+    const net = (totC * MGN_C) + (m * i * MGN_M) - OPEX;
+    cum += net;
+    if (i <= 12) p12 += net;
+    if (cum >= 0 && pb === -1) pb = i;
+    pts.push(cum);
+  }
+
+  document.getElementById('pb_out').innerText  = pb > 0 ? pb + ' ヶ月' : '36ヶ月超';
+  document.getElementById('p12_out').innerText = (p12 >= 0 ? '+' : '') + Math.floor(p12).toLocaleString() + '円';
+  document.getElementById('p12_out').style.color = p12 >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Chart
+  drawCFChart(pts);
+
+  // Insight
+  const insight = document.getElementById('cf_insight');
+  insight.innerHTML = `慢性疾患 <strong>${c.toFixed(1)}名/月</strong>・自費 <strong>${m}名/月</strong> のペースで、
+    負債完済は <span class="${pb>0?'hi':'hi-r'}">${pb > 0 ? pb + 'ヶ月目' : '36ヶ月以内に未達'}</span>。
+    LTV/CAC比率 <span class="${ratio>=3?'hi-g':'hi-r'}">${ratio.toFixed(1)}倍</span>
+    （目標 3.0以上）。${ratio < 3 ? '慢性疾患獲得数を増やすか、自費患者数の上積みが急務です。' : '健全な投資効率を維持しています。'}`;
+}
+
+function drawCFChart(pts) {
+  const svg = document.getElementById('cf_svg');
+  svg.innerHTML = '';
+  const W=500, H=130;
+  const MIN=-12000000, MAX=Math.max(12000000,...pts);
+  const gY = v => H - ((v-MIN)/(MAX-MIN))*H;
+  const gX = i => (i/(pts.length-1))*W;
+
+  // Zero line
+  const zY = gY(0);
+  const zl = mkEl('line');
+  setA(zl, {x1:0,y1:zY,x2:W,y2:zY,stroke:'rgba(255,255,255,0.15)','stroke-width':1,'stroke-dasharray':'4,4'});
+  svg.appendChild(zl);
+
+  // BEP label
+  const txt = mkEl('text');
+  setA(txt, {x:W-4,y:zY-5,'text-anchor':'end',fill:'rgba(255,255,255,0.3)','font-size':'8'});
+  txt.textContent='BEP';
+  svg.appendChild(txt);
+
+  // Fill
+  let d2 = `M 0 ${H} L 0 ${gY(pts[0])}`;
+  pts.forEach((v,i) => { d2 += ` L ${gX(i)} ${gY(v)}`; });
+  d2 += ` L ${W} ${H} Z`;
+  const fill = mkEl('path');
+  setA(fill, {d:d2, fill:'rgba(59,130,246,0.08)'});
+  svg.appendChild(fill);
+
+  // Line
+  let d = `M 0 ${gY(pts[0])}`;
+  pts.forEach((v,i) => { d += ` L ${gX(i)} ${gY(v)}`; });
+  const path = mkEl('path');
+  setA(path, {d, stroke:'#3b82f6', fill:'none', 'stroke-width':'2.5', 'stroke-linejoin':'round', 'stroke-linecap':'round'});
+  svg.appendChild(path);
+}
+
+function mkEl(tag) { return document.createElementNS('http://www.w3.org/2000/svg', tag); }
+function setA(el, attrs) { Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k,v)); }
+
+// ==========================================
+//  VIEW 2: 機会損失
+// ==========================================
+function calcOpp() {
+  const h = parseInt(document.getElementById('h_in').value);
+  const t = parseInt(document.getElementById('t_in').value);
+
+  document.getElementById('h_out').innerText = '¥' + h.toLocaleString();
+  document.getElementById('t_out').innerText = t + ' h';
+
+  const diy  = h * t;
+  const loss = Math.max(0, diy - 400000);
+  document.getElementById('loss_out').innerText = '¥' + loss.toLocaleString();
+
+  const maxBar = Math.max(diy, 400000, 800000);
+  const dPct  = Math.min(100, (diy / maxBar) * 100);
+
+  document.getElementById('bar_d').style.width   = dPct + '%';
+  document.getElementById('bar_d').innerText      = '¥' + diy.toLocaleString();
+  document.getElementById('bar_s').style.width   = Math.min(100,(400000/maxBar)*100) + '%';
+
+  const insight = document.getElementById('opp_insight');
+  if (loss > 0) {
+    insight.innerHTML = `時給 <strong>¥${h.toLocaleString()}</strong> の先生が月 <strong>${t}時間</strong> を非診療実務に投じることは、
+      実質 <span class="hi-r">¥${diy.toLocaleString()}</span> 相当の診療機会を手放しています。
+      委託コスト ¥400,000 との差額 <span class="hi">¥${loss.toLocaleString()}</span> が、毎月生じている機会損失です。`;
+  } else {
+    insight.innerHTML = `現在の設定では、外部委託コスト（¥400,000）が自己実施コストを上回っています。
+      時給設定または実務時間を見直すか、委託範囲を絞り込むことで収支が改善します。`;
+  }
+}
+
+// ==========================================
+//  VIEW 3: SCR
+// ==========================================
+function calcSCR() {
+  const ins  = parseFloat(document.getElementById('ins_in').value) * 10000;
+  const fix  = parseFloat(document.getElementById('fix_in').value) * 10000;
+  const unit = parseFloat(document.getElementById('pu_in').value);
+  const curr = parseFloat(document.getElementById('pc_in').value);
+  const rate = parseFloat(document.getElementById('rate_in').value);
+
+  document.getElementById('ins_out').innerText  = (ins/10000).toLocaleString() + ' 万円';
+  document.getElementById('fix_out').innerText  = (fix/10000).toLocaleString() + ' 万円';
+  document.getElementById('pu_out').innerText   = '¥' + unit.toLocaleString();
+  document.getElementById('pc_out').innerText   = curr + ' 名';
+  document.getElementById('rate_out').innerText = rate.toFixed(1) + ' %';
+
+  // SCR
+  const scr = ((unit * curr) / fix) * 100;
+  const scrEl = document.getElementById('scr_val');
+  scrEl.innerHTML = scr.toFixed(1) + '<span style="font-size:1.5rem">%</span>';
+  if (scr < 10)       scrEl.style.color = 'var(--red)';
+  else if (scr < 30)  scrEl.style.color = '#f59e0b';
+  else                scrEl.style.color = 'var(--green)';
+
+  // Impact
+  const impact = ins * (rate / 100);
+  const ivEl   = document.getElementById('impact_val');
+  const ilEl   = document.getElementById('impact_label');
+  const inEl   = document.getElementById('impact_note');
+
+  if (rate >= 0) {
+    ivEl.innerHTML = '+¥' + Math.floor(impact).toLocaleString();
+    ivEl.style.color = 'var(--green)';
+    ilEl.innerText = '改定による【増収】予測';
+    const sp = Math.floor(impact / unit);
+    inEl.innerHTML = `この増収分は、自由診療 <strong style="color:var(--green)">${sp}名分</strong> の利益に相当します。国の「ボーナス」に頼らず、自力でこれを上積みできるかが真の経営力です。`;
+  } else {
+    ivEl.innerHTML = '▲¥' + Math.floor(Math.abs(impact)).toLocaleString();
+    ivEl.style.color = 'var(--red)';
+    ilEl.innerText = '改定による【減収】予測';
+    const np = Math.ceil(Math.abs(impact) / unit);
+    inEl.innerHTML = `この損失を補填するには、自由診療をあと <strong style="color:var(--red)">+${np}名</strong> 上積みする必要があります。`;
+  }
+
+  // SCR insight
+  const si = document.getElementById('scr_insight');
+  si.innerHTML = `SCR <strong>${scr.toFixed(1)}%</strong>：${
+    scr < 10  ? '自由診療の収益基盤が極めて脆弱です。保険点数の動向次第で経営が直撃されます。' :
+    scr < 30  ? '一定の自律性はありますが、改定リスクに対して脆弱な水準です。' :
+                '自由診療が固定費の相当部分をカバーしています。経営主導権の確立に向けて着実に前進しています。'
+  }`;
+}
+
+// ── 初期実行 ──
+calcCF();
+calcOpp();
+calcSCR();
+</script>
+</body>
+</html>

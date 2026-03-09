@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>経営判断シミュレーター Pro</title>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #334155;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+        body {
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            padding-bottom: 140px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Titles */
+        h1 { text-align: center; font-size: 1.2rem; margin-bottom: 20px; color: var(--primary); opacity: 0.8; }
+        
+        /* Grid Layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) { .grid-2 { grid-template-columns: 1fr; } }
+
+        /* Card Style */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            font-weight: 700;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Inputs */
+        .input-group { margin-bottom: 18px; }
+        .label-row {
+            display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;
+        }
+        label { font-size: 0.8rem; font-weight: 600; color: #64748b; }
+        .val-disp { font-family: "Menlo", monospace; font-weight: 700; color: var(--accent); }
+
+        input[type="range"] {
+            width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px;
+            outline: none; -webkit-appearance: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 20px; height: 20px;
+            background: var(--primary); border-radius: 50%; cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid #fff;
+        }
+
+        /* Visual Chart (BEP Bar) */
+        .bep-container {
+            position: relative; height: 30px; background: #fee2e2; /* Red zone background */
+            border-radius: 15px; overflow: hidden; margin-top: 10px;
+            border: 1px solid #e2e8f0;
+        }
+        .bep-safe-zone {
+            position: absolute; right: 0; top: 0; bottom: 0;
+            background: #dcfce7; /* Green zone */
+            z-index: 1;
+        }
+        .bep-bar {
+            position: absolute; top: 0; bottom: 0; left: 0;
+            background: transparent; z-index: 2;
+            border-right: 3px solid var(--primary); /* Current Sales Marker */
+            transition: width 0.3s;
+        }
+        .bep-label {
+            position: absolute; width: 100%; text-align: center; top: 6px;
+            font-size: 0.75rem; z-index: 3; font-weight: bold; pointer-events: none;
+        }
+
+        /* Score Gauge */
+        .score-panel {
+            background: var(--primary); color: white; padding: 20px; border-radius: 12px;
+            text-align: center; margin-bottom: 20px;
+        }
+        .score-val { font-size: 3rem; font-weight: 800; line-height: 1; margin: 10px 0; }
+        .score-judge { font-size: 1.2rem; font-weight: 700; opacity: 0.9; }
+        .score-breakdown {
+            display: flex; justify-content: center; gap: 15px; font-size: 0.8rem;
+            margin-top: 10px; opacity: 0.8;
+        }
+
+        /* Result Table */
+        .res-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .res-table th { text-align: left; padding: 8px; color: #64748b; font-size: 0.75rem; }
+        .res-table td { padding: 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
+        .col-w { background: #fef2f2; color: var(--danger); }
+        .col-b { color: var(--primary); }
+        .col-h { background: #f0fdf4; color: var(--success); }
+
+        /* Sticky Footer */
+        .footer {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: rgba(255,255,255,0.95); padding: 12px 20px;
+            border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between;
+            align-items: center; backdrop-filter: blur(8px); z-index: 100;
+        }
+        .f-item { font-size: 0.75rem; color: #64748b; }
+        .f-val { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="score-panel" id="panel_bg">
+        <div style="font-size:0.8rem;">投資判断スコア (100点満点)</div>
+        <div class="score-val" id="score_total">--</div>
+        <div class="score-judge" id="score_judge">--</div>
+        <div class="score-breakdown">
+            <span>財務: <span id="s_fin">0</span>/60</span>
+            <span>戦略: <span id="s_str">0</span>/30</span>
+            <span>市場: <span id="s_mac">0</span>/10</span>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div>
+            <div class="card">
+                <div class="card-header">1. 財務パラメータ <span style="font-size:0.7rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">INPUT</span></div>
+                
+                <div class="input-group">
+                    <div class="label-row"><label>初期投資額</label><span class="val-disp" id="d_invest">1000万円</span></div>
+                    <input type="range" id="invest" min="0" max="10000" step="50" value="1500">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>想定月商</label><span class="val-disp" id="d_sales">300万円</span></div>
+                    <input type="range" id="sales" min="10" max="5000" step="10" value="300">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>粗利率 (変動費控除後)</label><span class="val-disp" id="d_margin">70%</span></div>
+                    <input type="range" id="margin" min="10" max="100" step="1" value="70">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>月間固定費</label><span class="val-disp" id="d_fixed">150万円</span></div>
+                    <input type="range" id="fixed" min="0" max="2000" step="10" value="150">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>自己資金比率</label><span class="val-disp" id="d_equity">30%</span></div>
+                    <input type="range" id="equity" min="0" max="100" step="5" value="30">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>期待収益率 (ハードルレート)</label><span class="val-disp" id="d_hurdle">10%</span></div>
+                    <input type="range" id="hurdle" min="0" max="30" step="1" value="10">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">損益分岐点モニター</div>
+                <div style="font-size:0.8rem; margin-bottom:5px;">
+                    現在売上: <span id="m_sales" style="font-weight:bold;">--</span> vs 
+                    分岐点: <span id="m_bep" style="font-weight:bold;">--</span>
+                </div>
+                <div class="bep-container">
+                    <div class="bep-safe-zone" id="bep_green_zone"></div> <div class="bep-bar" id="bep_curr_bar"></div> <div class="bep-label" id="bep_msg">安全圏</div>
+                </div>
+                <div style="font-size:0.7rem; color:#64748b; margin-top:5px; text-align:center;">
+                    赤エリア=赤字 / 緑エリア=黒字
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">2. 定性・戦略評価 <span style="font-size:0.7rem; background:#f1f5f9; padding:2px 6px; border-radius:4px;">STRATEGY</span></div>
+                
+                <div class="input-group">
+                    <div class="label-row"><label>戦略適合性 (シナジー・MVV)</label><span class="val-disp" id="d_q_strat">3</span></div>
+                    <input type="range" id="q_strat" min="1" max="5" step="1" value="3">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>競合優位性 (Moat)</label><span class="val-disp" id="d_q_moat">3</span></div>
+                    <input type="range" id="q_moat" min="1" max="5" step="1" value="3">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>実行体制・撤退容易性</label><span class="val-disp" id="d_q_team">3</span></div>
+                    <input type="range" id="q_team" min="1" max="5" step="1" value="3">
+                </div>
+                <div class="input-group">
+                    <div class="label-row"><label>市場環境 (成長性・法規制)</label><span class="val-disp" id="d_q_macro">3</span></div>
+                    <input type="range" id="q_macro" min="1" max="5" step="1" value="3">
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">3. シナリオ分析 (期間5年)</div>
+                <table class="res-table">
+                    <thead>
+                        <tr>
+                            <th>指標</th>
+                            <th class="col-w">Worst<br><small>(売上70%)</small></th>
+                            <th class="col-b">Base<br><small>(計画通り)</small></th>
+                            <th class="col-h">Best<br><small>(売上120%)</small></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>NPV</td>
+                            <td class="col-w" id="r_npv_w">--</td>
+                            <td class="col-b" id="r_npv_b">--</td>
+                            <td class="col-h" id="r_npv_h">--</td>
+                        </tr>
+                        <tr>
+                            <td>IRR</td>
+                            <td class="col-w" id="r_irr_w">--</td>
+                            <td class="col-b" id="r_irr_b">--</td>
+                            <td class="col-h" id="r_irr_h">--</td>
+                        </tr>
+                        <tr>
+                            <td>回収</td>
+                            <td class="col-w" id="r_pb_w">--</td>
+                            <td class="col-b" id="r_pb_b">--</td>
+                            <td class="col-h" id="r_pb_h">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <div>
+        <div class="f-item">Base NPV</div>
+        <div class="f-val" id="f_npv">--</div>
+    </div>
+    <div>
+        <div class="f-item">WACC</div>
+        <div class="f-val" id="f_wacc">--</div>
+    </div>
+    <div>
+        <div class="f-item">判定</div>
+        <div class="f-val" id="f_judge">--</div>
+    </div>
+</div>
+
+<script>
+    // Config & Utilities
+    const el = (id) => document.getElementById(id);
+    const money = (v) => new Intl.NumberFormat('ja-JP').format(Math.round(v)) + '万円';
+    const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
+
+    // Inputs
+    const inputs = ['invest', 'sales', 'margin', 'fixed', 'equity', 'hurdle', 'q_strat', 'q_moat', 'q_team', 'q_macro'];
+
+    function calc() {
+        // 1. Get Values
+        const invest = Number(el('invest').value); // 万円
+        const sales = Number(el('sales').value); // 万円
+        const margin = Number(el('margin').value) / 100;
+        const fixed = Number(el('fixed').value); // 万円
+        const equity = Number(el('equity').value) / 100;
+        const hurdle = Number(el('hurdle').value) / 100;
+        const debtRate = 0.025; // 固定2.5%
+        const years = 5;
+
+        // 定性スコア
+        const q_strat = Number(el('q_strat').value);
+        const q_moat = Number(el('q_moat').value);
+        const q_team = Number(el('q_team').value);
+        const q_macro = Number(el('q_macro').value);
+
+        // Update Displays
+        el('d_invest').innerText = money(invest);
+        el('d_sales').innerText = money(sales);
+        el('d_margin').innerText = (margin * 100).toFixed(0) + '%';
+        el('d_fixed').innerText = money(fixed);
+        el('d_equity').innerText = (equity * 100).toFixed(0) + '%';
+        el('d_hurdle').innerText = (hurdle * 100).toFixed(0) + '%';
+        
+        el('d_q_strat').innerText = q_strat;
+        el('d_q_moat').innerText = q_moat;
+        el('d_q_team').innerText = q_team;
+        el('d_q_macro').innerText = q_macro;
+
+        // 2. Logic: WACC
+        const wacc = (equity * hurdle) + ((1 - equity) * debtRate);
+        el('f_wacc').innerText = (wacc * 100).toFixed(1) + '%';
+
+        // 3. Logic: BEP Visualizer
+        const marginalRate = margin; // 変動費率は 1-margin
+        const bepSales = marginalRate > 0 ? fixed / marginalRate : 99999;
+        
+        el('m_sales').innerText = money(sales);
+        el('m_bep').innerText = money(bepSales);
+
+        // BEP Bar Logic
+        // Chart Range: 0 to Max(Sales*1.5, BEP*1.2)
+        const maxScale = Math.max(sales * 1.5, bepSales * 1.1);
+        const bepPct = (bepSales / maxScale) * 100;
+        const currPct = (sales / maxScale) * 100;
+
+        // Green Zone starts from BEP
+        const greenWidth = 100 - bepPct;
+        el('bep_green_zone').style.width = clamp(greenWidth, 0, 100) + '%';
+        
+        // Current Bar
+        el('bep_curr_bar').style.width = clamp(currPct, 0, 100) + '%';
+        el('bep_msg').innerText = sales >= bepSales ? `安全圏 (+${money(sales - bepSales)})` : `危険水域 (-${money(bepSales - sales)})`;
+        el('bep_msg').style.color = sales >= bepSales ? '#064e3b' : '#7f1d1d';
+
+
+        // 4. Scenario Calculation (NPV/IRR/Payback)
+        function calcScenario(mod) {
+            const s = sales * mod;
+            const cfYearly = (s * margin - fixed) * 12; // 簡易CF (税引前)
+            
+            // NPV
+            let npv = -invest;
+            for(let t=1; t<=years; t++) {
+                npv += cfYearly / Math.pow(1 + wacc, t);
+            }
+
+            // Payback
+            let pb = cfYearly > 0 ? invest / cfYearly : 99;
+
+            // IRR (Simplified: 5年満期)
+            // -Invest + CF/(1+r) + ...
+            // 近似解: CF/Invest の逆数などから推計せず、簡易ループで解く
+            let irr = -1;
+            if(cfYearly > 0) {
+                 let min= -0.9, max=5.0;
+                 for(let i=0; i<20; i++){
+                     let mid = (min+max)/2;
+                     let val = -invest;
+                     for(let t=1; t<=years; t++) val += cfYearly / Math.pow(1+mid, t);
+                     if(val > 0) min = mid; else max = mid;
+                 }
+                 irr = min;
+            }
+
+            return { npv: npv, pb: pb, irr: irr };
+        }
+
+        const w = calcScenario(0.7);
+        const b = calcScenario(1.0);
+        const h = calcScenario(1.2);
+
+        // Render Result Table
+        const render = (suf, d) => {
+            const elN = el('r_npv_' + suf);
+            const elI = el('r_irr_' + suf);
+            const elP = el('r_pb_' + suf);
+
+            elN.innerText = money(d.npv);
+            elN.style.color = d.npv >= 0 ? 'inherit' : '#ef4444';
+
+            elI.innerText = d.irr < -0.5 ? '-' : (d.irr*100).toFixed(1) + '%';
+            
+            if(d.pb > 20) {
+                elP.innerText = '不能';
+                elP.style.color = '#ef4444';
+            } else {
+                elP.innerText = d.pb.toFixed(1) + '年';
+                elP.style.color = d.pb <= 3 ? 'inherit' : '#f59e0b';
+            }
+        };
+
+        render('w', w);
+        render('b', b);
+        render('h', h);
+        
+        el('f_npv').innerText = money(b.npv);
+
+
+        // 5. Total Scoring (Hybrid)
+        // Financial Score (60pt)
+        let sFin = 0;
+        // ROI component
+        const roi = invest > 0 ? b.npv / invest : 0; // NPV/Invest ratio
+        sFin += clamp(roi * 40, 0, 25); // Max 25 (ROI 60%+)
+        // Payback component
+        if(b.pb <= 3) sFin += 20;
+        else if(b.pb <= 5) sFin += 10;
+        // Risk component (Worst Case)
+        if(w.npv < -invest * 0.3) sFin -= 10; // Penalty
+        if(w.pb > 10) sFin -= 5;
+        // IRR component
+        if(b.irr > hurdle) sFin += 15;
+        
+        sFin = clamp(Math.round(sFin), 0, 60);
+
+        // Strategy Score (30pt)
+        // Average of 3 items (1-5) mapped to 30
+        const stratAvg = (q_strat + q_moat + q_team) / 3;
+        const sStr = Math.round((stratAvg / 5) * 30);
+
+        // Macro Score (10pt)
+        const sMac = Math.round((q_macro / 5) * 10);
+
+        const total = sFin + sStr + sMac;
+
+        // UI Update
+        el('score_total').innerText = total;
+        el('s_fin').innerText = sFin;
+        el('s_str').innerText = sStr;
+        el('s_mac').innerText = sMac;
+
+        const panel = el('panel_bg');
+        const judge = el('score_judge');
+        const f_judge = el('f_judge');
+
+        if(total >= 80) {
+            panel.style.background = "#10b981"; // Green
+            judge.innerText = "Sランク: 即決 (Go)";
+            f_judge.innerText = "S (Go)"; f_judge.style.color = "#10b981";
+        } else if (total >= 60) {
+            panel.style.background = "#f59e0b"; // Orange
+            judge.innerText = "Aランク: 条件付 (Review)";
+            f_judge.innerText = "A (Review)"; f_judge.style.color = "#f59e0b";
+        } else {
+            panel.style.background = "#ef4444"; // Red
+            judge.innerText = "Cランク: 却下 (Stop)";
+            f_judge.innerText = "C (Stop)"; f_judge.style.color = "#ef4444";
+        }
+    }
+
+    inputs.forEach(id => el(id).addEventListener('input', calc));
+    calc();
+</script>
+
+</body>
+</html>

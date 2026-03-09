@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>2026 窓リノベ・投資対効果シミュレーター</title>
+    <style>
+        :root {
+            --primary: #007AFF;
+            --accent: #FF3B30;
+            --bg: #F2F2F7;
+            --card: #FFFFFF;
+            --text: #1C1C1E;
+            --subtext: #8E8E93;
+            --gold: #FFD700;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* レイアウト */
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            max-width: 1024px;
+            margin: 0 auto;
+            height: 90vh;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: 18px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        h2 {
+            margin: 0 0 20px 0;
+            font-size: 1.4rem;
+            color: var(--subtext);
+            border-bottom: 1px solid #E5E5EA;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 入力フォーム */
+        .input-group { margin-bottom: 24px; }
+        .input-row { display: flex; gap: 15px; }
+        
+        label {
+            display: block;
+            font-size: 0.9rem;
+            color: var(--subtext);
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.5rem;
+            border: 2px solid #E5E5EA;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            box-sizing: border-box;
+            background: #FAFAFA;
+        }
+        input:focus { border-color: var(--primary); outline: none; background: #FFF; }
+
+        /* グレードスイッチ */
+        .grade-toggle {
+            display: flex;
+            background: #E5E5EA;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 20px;
+        }
+        .grade-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .grade-btn.active {
+            background: var(--card);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color: var(--primary);
+        }
+        .grade-btn.s-grade.active {
+            color: #B8860B; /* Dark Gold */
+            background: #FFF8DC;
+        }
+
+        /* 結果プレビューエリア */
+        .preview-box {
+            background: #F9F9F9;
+            border-radius: 14px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #DDD;
+            padding-bottom: 5px;
+        }
+        .price-label { font-size: 0.9rem; color: var(--subtext); }
+        .price-val { font-size: 1.2rem; font-weight: bold; }
+        
+        .final-price {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: var(--accent);
+            margin: 10px 0;
+            line-height: 1;
+        }
+        .final-label { font-size: 0.9rem; color: var(--accent); font-weight: bold; }
+
+        .btn-add {
+            width: 100%;
+            padding: 18px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,122,255,0.3);
+        }
+        .btn-add:active { transform: scale(0.98); }
+
+        /* リストエリア */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        .list-item {
+            background: #F9F9F9;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .item-info { font-size: 0.9rem; }
+        .item-grade { 
+            display: inline-block; 
+            padding: 2px 8px; 
+            border-radius: 4px; 
+            font-size: 0.7rem; 
+            font-weight: bold; 
+            color: white;
+            margin-right: 5px;
+        }
+        .bg-S { background: linear-gradient(135deg, #FFD700, #FFA500); color: #333; }
+        .bg-A { background: #34C759; }
+        
+        .item-price { font-weight: bold; font-size: 1.1rem; color: var(--accent); }
+        .btn-del { 
+            color: #CCC; 
+            font-size: 1.5rem; 
+            margin-left: 15px; 
+            cursor: pointer; 
+            padding: 0 10px;
+        }
+
+        /* 合計エリア */
+        .total-area {
+            margin-top: auto;
+            padding-top: 20px;
+            border-top: 2px solid #E5E5EA;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .big-total {
+            font-size: 3rem;
+            font-weight: 900;
+            color: var(--accent);
+        }
+        .subsidy-total { color: #34C759; font-weight: bold; }
+
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; height: auto; }
+            .card { min-height: 400px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>物件・窓スペック入力</h2>
+
+        <label>窓グレード（Uw値）</label>
+        <div class="grade-toggle">
+            <button class="grade-btn s-grade active" onclick="setGrade('S')">S (Uw1.1以下)</button>
+            <button class="grade-btn" onclick="setGrade('A')">A (Uw1.5以下)</button>
+        </div>
+        <p style="font-size:0.8rem; color:#888; margin-top:-15px; margin-bottom:20px;">
+            ※Sグレード推奨：真空ガラス / トリプルガラス等<br>
+            ※Aグレード：一般Low-E複層ガラス等
+        </p>
+
+        <div class="input-row">
+            <div style="flex:1">
+                <label>横幅 (cm)</label>
+                <input type="number" id="width" placeholder="165" value="165" oninput="calc()">
+            </div>
+            <div style="flex:1">
+                <label>高さ (cm)</label>
+                <input type="number" id="height" placeholder="200" value="200" oninput="calc()">
+            </div>
+        </div>
+
+        <div class="preview-box">
+            <div class="price-row">
+                <span class="price-label">参考工事価格(税込)</span>
+                <span class="price-val" id="marketPrice">¥0</span>
+            </div>
+            <div class="price-row" style="color:#34C759;">
+                <span class="price-label">補助金見込額(2026暫定)</span>
+                <span class="price-val" id="subsidyPrice">▲ ¥0</span>
+            </div>
+            
+            <div class="final-label">オーナー実質負担額</div>
+            <div class="final-price" id="realPrice">¥0</div>
+            <div id="sizeBadge" style="font-size:0.9rem; font-weight:bold; color:#666;">サイズ: - / 面積: -</div>
+        </div>
+
+        <button class="btn-add" onclick="addToList()">＋ 見積リストに追加</button>
+    </div>
+
+    <div class="card">
+        <h2>
+            シミュレーション結果
+            <button onclick="resetAll()" style="font-size:0.9rem; padding:5px 10px; border:1px solid #ddd; background:none; border-radius:8px;">リセット</button>
+        </h2>
+
+        <div class="list-container" id="listArea">
+            <div style="text-align:center; color:#ccc; margin-top:50px;">
+                左のパネルから窓を追加してください
+            </div>
+        </div>
+
+        <div class="total-area">
+            <div class="total-row">
+                <span class="price-label">参考工事総額</span>
+                <span style="font-weight:bold;" id="totalMarket">¥0</span>
+            </div>
+            <div class="total-row">
+                <span class="price-label" style="color:#34C759;">補助金総額</span>
+                <span class="subsidy-total" id="totalSubsidy">▲ ¥0</span>
+            </div>
+            <div style="text-align:right; margin-top:10px;">
+                <div style="font-size:0.9rem; color:var(--accent); font-weight:bold;">実質負担総額</div>
+                <div class="big-total" id="totalReal">¥0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ==========================================
+    // ■ 設定マスタ（ここを調整して利益率を変える）
+    // ==========================================
+    
+    // 1. 市場価格マスタ（材工共・税込目安）
+    // ※内窓インプラス等を想定した「オーナー提示価格」
+    const MARKET_PRICE = {
+        S: { L: 148000, M: 105000, S: 72000 }, // 高性能ガラスのため高め
+        A: { L: 110000, M: 85000,  S: 58000 }  // 一般ペアガラス
+    };
+
+    // 2. 補助金マスタ（2025実績ベースの2026暫定値）
+    // ※内窓・設置区分の金額
+    const SUBSIDY_PRICE = {
+        S: { L: 68000, M: 46000, S: 29000 }, // Uw1.1以下
+        A: { L: 52000, M: 36000, S: 23000 }  // Uw1.9以下(実質A相当)
+    };
+
+    // ==========================================
+
+    let currentGrade = 'S';
+    let windowList = [];
+
+    // グレード切替
+    function setGrade(g) {
+        currentGrade = g;
+        document.querySelectorAll('.grade-btn').forEach(b => b.classList.remove('active'));
+        const targetClass = g === 'S' ? '.s-grade' : '.grade-btn:not(.s-grade)';
+        document.querySelector(targetClass).classList.add('active');
+        calc();
+    }
+
+    // 計算ロジック
+    function calc() {
+        const w = parseInt(document.getElementById('width').value) || 0;
+        const h = parseInt(document.getElementById('height').value) || 0;
+        
+        // 面積計算 (m2)
+        const area = (w * h) / 10000;
+        
+        // サイズ判定 (L:2.8以上, M:1.6以上, S:その他)
+        let size = 'S';
+        if (area >= 2.8) size = 'L';
+        else if (area >= 1.6) size = 'M';
+
+        // 金額取得
+        const market = MARKET_PRICE[currentGrade][size];
+        const subsidy = SUBSIDY_PRICE[currentGrade][size];
+        const real = market - subsidy;
+
+        // 画面表示
+        document.getElementById('marketPrice').innerText = '¥' + market.toLocaleString();
+        document.getElementById('subsidyPrice').innerText = '▲ ¥' + subsidy.toLocaleString();
+        document.getElementById('realPrice').innerText = '¥' + real.toLocaleString();
+        
+        document.getElementById('sizeBadge').innerText = 
+            `面積: ${area.toFixed(2)}㎡ (サイズ区分: ${size})`;
+
+        return { grade: currentGrade, size, w, h, market, subsidy, real };
+    }
+
+    // リスト追加
+    function addToList() {
+        const data = calc();
+        if(!data.w || !data.h) return;
+
+        windowList.push(data);
+        renderList();
+    }
+
+    // リスト描画 & 合計計算
+    function renderList() {
+        const listArea = document.getElementById('listArea');
+        listArea.innerHTML = '';
+
+        let tMarket = 0;
+        let tSubsidy = 0;
+        let tReal = 0;
+
+        windowList.forEach((item, index) => {
+            tMarket += item.market;
+            tSubsidy += item.subsidy;
+            tReal += item.real;
+
+            const div = document.createElement('div');
+            div.className = 'list-item';
+            div.innerHTML = `
+                <div>
+                    <div>
+                        <span class="item-grade bg-${item.grade}">${item.grade}</span>
+                        <span style="font-weight:bold;">内窓 (${item.size})</span>
+                    </div>
+                    <div class="item-info">W${item.w}×H${item.h} / 定価 ¥${item.market.toLocaleString()}</div>
+                </div>
+                <div style="display:flex; align-items:center;">
+                    <div style="text-align:right;">
+                        <div style="font-size:0.8rem; color:#34C759;">補助 ¥${item.subsidy.toLocaleString()}</div>
+                        <div class="item-price">実質 ¥${item.real.toLocaleString()}</div>
+                    </div>
+                    <div class="btn-del" onclick="del(${index})">×</div>
+                </div>
+            `;
+            listArea.appendChild(div);
+        });
+
+        // 合計表示
+        document.getElementById('totalMarket').innerText = '¥' + tMarket.toLocaleString();
+        document.getElementById('totalSubsidy').innerText = '▲ ¥' + tSubsidy.toLocaleString();
+        document.getElementById('totalReal').innerText = '¥' + tReal.toLocaleString();
+    }
+
+    function del(idx) {
+        windowList.splice(idx, 1);
+        renderList();
+    }
+
+    function resetAll() {
+        if(confirm('全てのデータをリセットしますか？')) {
+            windowList = [];
+            renderList();
+        }
+    }
+
+    // 初期実行
+    calc();
+</script>
+
+</body>
+</html>

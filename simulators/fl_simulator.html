@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>飲食業 FL比率改善シミュレーター</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#cc2929;--accent-dark:#a31f1f;--accent-light:#fdf0f0;--text:#1a1a1a;--text-sub:#555;--border:#e0e0e0;--radius:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:#f7f7f7;color:var(--text);font-size:14px;}
+.header{background:var(--text);color:#fff;padding:20px 28px;}
+.header h1{font-size:18px;font-weight:700;}
+.header p{font-size:12px;color:#aaa;margin-top:4px;}
+.container{max-width:800px;margin:28px auto;padding:0 20px 80px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.card h2{font-size:15px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--accent);}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:18px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--text-sub);margin-bottom:5px;}
+.fg input,.fg select{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Noto Sans JP',sans-serif;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);}
+.btn{background:var(--accent);color:#fff;border:none;padding:11px 28px;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+.btn:hover{background:var(--accent-dark);}
+.result{background:var(--accent-light);border:1px solid #f0c0c0;border-radius:var(--radius);padding:20px;margin-top:18px;display:none;}
+.result h3{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:.05em;}
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.ri{background:#fff;border-radius:6px;padding:12px 14px;border:1px solid #f0c0c0;}
+.ri .rl{font-size:11px;color:var(--text-sub);margin-bottom:4px;}
+.ri .rv{font-size:20px;font-weight:700;color:var(--accent);}
+.ri .ru{font-size:11px;color:var(--text-sub);}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+th{background:var(--text);color:#fff;padding:9px 12px;text-align:left;font-weight:600;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);}
+tr:nth-child(even) td{background:#fafafa;}
+.total td{font-weight:700;background:var(--accent-light);}
+.bar-wrap{margin:10px 0;}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+.bar-bg{background:#eee;height:10px;border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:4px;transition:width .5s ease;}
+.note{font-size:11px;color:var(--text-sub);margin-top:10px;line-height:1.6;}
+.badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:700;margin-right:4px;}
+.ok{background:#e8f5e9;color:#2e7d32;}
+.ng{background:#ffebee;color:#c62828;}
+.warn{background:#fff8e1;color:#f57f17;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🍽️ 飲食業 FL比率改善シミュレーター</h1>
+  <p>月商・F比率・L比率を入力するだけで改善インパクトを即時算出</p>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>現状の数値入力</h2>
+    <div class="form-grid">
+      <div class="fg"><label>月次売上（万円）</label><input type="number" id="fl_sales" value="500" min="1"></div>
+      <div class="fg"><label>食材費 F（万円/月）</label><input type="number" id="fl_food" value="155" min="0"></div>
+      <div class="fg"><label>人件費 L（万円/月）</label><input type="number" id="fl_labor" value="185" min="0"></div>
+      <div class="fg"><label>家賃 R（万円/月）</label><input type="number" id="fl_rent" value="50" min="0"></div>
+      <div class="fg"><label>その他経費（万円/月）</label><input type="number" id="fl_other" value="45" min="0"></div>
+      <div class="fg"><label>業態</label><select id="fl_type">
+        <option value="izakaya">居酒屋</option>
+        <option value="ramen">ラーメン・麺類</option>
+        <option value="cafe">カフェ・喫茶</option>
+        <option value="family" selected>ファミレス・定食</option>
+        <option value="fine">高級レストラン</option>
+      </select></div>
+    </div>
+    <h2 style="margin-top:0">改善目標設定</h2>
+    <div class="form-grid">
+      <div class="fg"><label>目標F比率（%）</label><input type="number" id="fl_target_f" value="30" min="0" max="100" step="0.5"></div>
+      <div class="fg"><label>目標L比率（%）</label><input type="number" id="fl_target_l" value="33" min="0" max="100" step="0.5"></div>
+    </div>
+    <button class="btn" onclick="calcFL()">FL改善インパクトを算出</button>
+    <div class="result" id="fl_result"></div>
+    <p class="note">FL比率目安：居酒屋55〜60%・ラーメン50〜55%・カフェ50〜55%・ファミレス60〜65%・高級60〜65%</p>
+  </div>
+</div>
+<script>
+const benchmarks={izakaya:[28,32,55,60],ramen:[30,35,50,55],cafe:[28,33,50,55],family:[32,38,60,65],fine:[35,40,60,65]};
+function status(val,min,max){
+  if(val>max) return `<span class="badge ng">▲高い</span>`;
+  if(val<min) return `<span class="badge warn">▼低い</span>`;
+  return `<span class="badge ok">✓適正</span>`;
+}
+function calcFL(){
+  const sales=+document.getElementById('fl_sales').value;
+  const food=+document.getElementById('fl_food').value;
+  const labor=+document.getElementById('fl_labor').value;
+  const rent=+document.getElementById('fl_rent').value;
+  const other=+document.getElementById('fl_other').value;
+  const type=document.getElementById('fl_type').value;
+  const tf=+document.getElementById('fl_target_f').value/100;
+  const tl=+document.getElementById('fl_target_l').value/100;
+  const [fMin,fMax,flMin,flMax]=benchmarks[type];
+  const fR=(food/sales*100).toFixed(1);
+  const lR=(labor/sales*100).toFixed(1);
+  const flR=((food+labor)/sales*100).toFixed(1);
+  const rR=(rent/sales*100).toFixed(1);
+  const totalCost=food+labor+rent+other;
+  const opProfit=sales-totalCost;
+  const margin=(opProfit/sales*100).toFixed(1);
+  // After improvement
+  const newFood=Math.round(sales*tf);
+  const newLabor=Math.round(sales*tl);
+  const foodSave=food-newFood;
+  const laborSave=labor-newLabor;
+  const totalSave=foodSave+laborSave;
+  const newProfit=opProfit+totalSave;
+  const newMargin=((newProfit/sales)*100).toFixed(1);
+  const annualGain=totalSave*12;
+  const el=document.getElementById('fl_result');
+  el.style.display='block';
+  el.innerHTML=`<h3>現状分析</h3>
+  <table>
+    <thead><tr><th>指標</th><th>現状</th><th>業態目安</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>F比率（食材費）</td><td>${fR}%</td><td>${fMin}〜${fMax}%</td><td>${status(+fR,fMin,fMax)}</td></tr>
+      <tr><td>L比率（人件費）</td><td>${lR}%</td><td>−</td><td>−</td></tr>
+      <tr><td>FL比率</td><td>${flR}%</td><td>${flMin}〜${flMax}%</td><td>${status(+flR,flMin,flMax)}</td></tr>
+      <tr><td>R比率（家賃）</td><td>${rR}%</td><td>〜10%</td><td>${status(+rR,0,10)}</td></tr>
+    </tbody>
+    <tfoot class="total"><tr><td>営業利益</td><td colspan="2">${opProfit}万円（${margin}%）</td><td>${+margin>=10?'<span class="badge ok">健全</span>':+margin>=5?'<span class="badge warn">要注意</span>':'<span class="badge ng">要改善</span>'}</td></tr></tfoot>
+  </table>
+  <h3 style="margin-top:18px">改善後インパクト（目標FL：F${(tf*100).toFixed(1)}%・L${(tl*100).toFixed(1)}%）</h3>
+  <div class="rg">
+    <div class="ri"><div class="rl">食材費削減</div><div class="rv">${foodSave}<span style="font-size:13px">万円/月</span></div></div>
+    <div class="ri"><div class="rl">人件費削減</div><div class="rv">${laborSave}<span style="font-size:13px">万円/月</span></div></div>
+    <div class="ri"><div class="rl">月次利益増加</div><div class="rv">${totalSave}<span style="font-size:13px">万円</span></div></div>
+    <div class="ri"><div class="rl">年間利益増加</div><div class="rv">${annualGain}<span style="font-size:13px">万円</span></div></div>
+    <div class="ri"><div class="rl">改善後営業利益率</div><div class="rv">${newMargin}<span style="font-size:13px">%</span></div></div>
+  </div>
+  <div class="bar-wrap" style="margin-top:16px">
+    <div class="bar-label"><span>現在のFL比率</span><span>${flR}%</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.min(+flR/80*100,100)}%;background:${+flR>flMax?'#c62828':'#cc2929'}"></div></div>
+    <div class="bar-label" style="margin-top:8px"><span>改善後のFL比率</span><span>${((tf+tl)*100).toFixed(1)}%</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${Math.min((tf+tl)/0.8*100,100)}%;background:#2e7d32"></div></div>
+  </div>`;
+}
+</script>
+</body>
+</html>

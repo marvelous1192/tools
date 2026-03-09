@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ペット共生リノベ 収益シミュレーター | Marvelous Diner</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep: #1a1a2e;
+    --gold: #c8a45c;
+    --gold-light: #e8c87c;
+    --text: #333333;
+    --bg: #f5f5f0;
+    --white: #ffffff;
+    --success: #2d7a4f;
+    --muted: #888880;
+    --border: #e0ded8;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    background: var(--deep);
+    padding: 28px 32px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .header-eyebrow {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--gold);
+    font-size: 0.75rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .header-title {
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--white);
+    font-size: 1.7rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    line-height: 1.3;
+  }
+  .header-sub {
+    color: rgba(255,255,255,0.45);
+    font-size: 0.7rem;
+    margin-top: 6px;
+    letter-spacing: 0.05em;
+  }
+
+  .main {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 28px 20px 48px;
+  }
+
+  /* ─── INPUT PANEL ─── */
+  .panel {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 28px 28px 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+    box-shadow: 0 2px 12px rgba(26,26,46,0.06);
+  }
+  .panel-title {
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+
+  .input-row {
+    margin-bottom: 28px;
+  }
+  .input-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .input-label-text {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text);
+  }
+  .input-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--deep);
+    letter-spacing: 0.02em;
+  }
+  .input-value span {
+    font-size: 0.85rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 2px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--deep);
+    border: 3px solid var(--gold);
+    cursor: pointer;
+    transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:active {
+    transform: scale(1.2);
+  }
+  input[type=range]::-webkit-slider-runnable-track {
+    background: linear-gradient(90deg, var(--gold) var(--pct, 0%), var(--border) var(--pct, 0%));
+    height: 4px;
+    border-radius: 4px;
+  }
+
+  .scale-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0 28px;
+  }
+
+  /* ─── PRESET EXAMPLES ─── */
+  .presets {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .preset-btn {
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 40px;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: var(--muted);
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .preset-btn:hover, .preset-btn.active {
+    border-color: var(--gold);
+    color: var(--deep);
+    background: rgba(200,164,92,0.08);
+  }
+  .preset-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+  }
+
+  /* ─── RESULTS ─── */
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  @media(max-width: 520px) {
+    .results-grid { grid-template-columns: 1fr; }
+  }
+
+  .result-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    box-shadow: 0 2px 10px rgba(26,26,46,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .result-card.highlight {
+    border-color: var(--gold);
+    background: var(--deep);
+  }
+  .result-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--border);
+  }
+  .result-card.highlight::before {
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  }
+
+  .rc-label {
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .result-card.highlight .rc-label { color: rgba(255,255,255,0.45); }
+
+  .rc-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--deep);
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+  .result-card.highlight .rc-value { color: var(--gold); }
+
+  .rc-unit {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 400;
+    color: var(--muted);
+    margin-left: 3px;
+  }
+  .rc-sub {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .result-card.highlight .rc-sub { color: rgba(255,255,255,0.35); }
+
+  /* ─── RENT COMPARISON ─── */
+  .rent-compare {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px 24px;
+    margin-bottom: 14px;
+    box-shadow: 0 2px 10px rgba(26,26,46,0.05);
+  }
+  .rent-compare-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+  .rent-bar-wrap {
+    margin-bottom: 14px;
+  }
+  .rent-bar-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .rent-bar-name { font-size: 0.78rem; color: var(--muted); }
+  .rent-bar-amount {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .rent-bar-track {
+    height: 8px;
+    background: var(--bg);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .rent-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-before { background: var(--border); }
+  .bar-after  { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+
+  .premium-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(45,122,79,0.1);
+    border: 1px solid rgba(45,122,79,0.25);
+    color: var(--success);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 40px;
+    margin-top: 4px;
+  }
+  .premium-badge::before {
+    content: '▲';
+    font-size: 0.65rem;
+  }
+
+  /* ─── 4-YEAR TIMELINE ─── */
+  .timeline-card {
+    background: var(--deep);
+    border-radius: 16px;
+    padding: 24px 26px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .timeline-card::after {
+    content: '';
+    position: absolute;
+    bottom: -30px; right: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(200,164,92,0.08);
+  }
+
+  .tl-title {
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  .tl-bars {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    align-items: end;
+    height: 100px;
+    margin-bottom: 10px;
+  }
+  .tl-bar-col { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; }
+  .tl-bar {
+    width: 100%;
+    border-radius: 6px 6px 0 0;
+    transition: height 0.5s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+  }
+  .tl-bar-label {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--gold);
+    margin-bottom: 4px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .tl-year {
+    font-size: 0.65rem;
+    color: rgba(255,255,255,0.3);
+    margin-top: 6px;
+    text-align: center;
+  }
+  .tl-total {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .tl-total-label {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.1em;
+  }
+  .tl-total-value {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: 0.02em;
+  }
+  .tl-total-unit {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.4);
+    margin-left: 4px;
+    font-family: 'Noto Sans JP', sans-serif;
+  }
+
+  /* ─── DISCLAIMER ─── */
+  .disclaimer {
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.7;
+    padding: 16px 20px;
+    background: rgba(0,0,0,0.02);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  /* ─── TRANSITION ─── */
+  .animated { transition: all 0.35s cubic-bezier(0.4,0,0.2,1); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-eyebrow">Marvelous Diner — Simulation Tool</div>
+  <div class="header-title">ペット共生リノベ<br>収益シミュレーター</div>
+  <div class="header-sub">現在賃料・空室率・投資額を設定すると、4年間の収益優位性を即時算出します</div>
+</header>
+
+<div class="main">
+
+  <!-- INPUTS -->
+  <div class="panel">
+    <div class="panel-title">物件データを入力</div>
+
+    <div class="preset-label">実績サンプルから入力</div>
+    <div class="presets">
+      <button class="preset-btn" onclick="applyPreset(76000, 10, 800000)" id="preset-a">事例A：7.6万円台ファミリー</button>
+      <button class="preset-btn" onclick="applyPreset(110000, 8, 1200000)" id="preset-b">事例B：11万円台マンション</button>
+    </div>
+
+    <div class="input-row">
+      <div class="input-label">
+        <span class="input-label-text">現在の月額賃料</span>
+        <div class="input-value" id="disp-rent">76,000<span>円</span></div>
+      </div>
+      <input type="range" id="sl-rent" min="40000" max="200000" step="1000" value="76000"
+             oninput="onSlide()" style="--pct:30%">
+      <div class="scale-labels"><span>4万円</span><span>20万円</span></div>
+    </div>
+
+    <div class="input-row">
+      <div class="input-label">
+        <span class="input-label-text">リノベーション後の賃料プレミアム率</span>
+        <div class="input-value" id="disp-prem">12<span>%</span></div>
+      </div>
+      <input type="range" id="sl-prem" min="5" max="25" step="1" value="12"
+             oninput="onSlide()" style="--pct:35%">
+      <div class="scale-labels"><span>5%</span><span>25%</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="input-row">
+      <div class="input-label">
+        <span class="input-label-text">初期投資額（リノベ工事費）</span>
+        <div class="input-value" id="disp-inv">800,000<span>円</span></div>
+      </div>
+      <input type="range" id="sl-inv" min="300000" max="3000000" step="50000" value="800000"
+             oninput="onSlide()" style="--pct:19%">
+      <div class="scale-labels"><span>30万円</span><span>300万円</span></div>
+    </div>
+
+    <div class="input-row" style="margin-bottom:0;">
+      <div class="input-label">
+        <span class="input-label-text">現在の年間空室月数（想定）</span>
+        <div class="input-value" id="disp-vac">1.5<span>ヶ月/年</span></div>
+      </div>
+      <input type="range" id="sl-vac" min="0" max="6" step="0.5" value="1.5"
+             oninput="onSlide()" style="--pct:25%">
+      <div class="scale-labels"><span>0ヶ月</span><span>6ヶ月</span></div>
+    </div>
+  </div>
+
+  <!-- RENT COMPARISON -->
+  <div class="rent-compare">
+    <div class="rent-compare-title">賃料比較 — Before / After</div>
+    <div class="rent-bar-wrap">
+      <div class="rent-bar-label">
+        <span class="rent-bar-name">現在賃料</span>
+        <span class="rent-bar-amount animated" id="cmp-before">76,000円/月</span>
+      </div>
+      <div class="rent-bar-track">
+        <div class="rent-bar-fill bar-before animated" id="bar-before" style="width:76%"></div>
+      </div>
+    </div>
+    <div class="rent-bar-wrap">
+      <div class="rent-bar-label">
+        <span class="rent-bar-name">リノベ後賃料（想定）</span>
+        <span class="rent-bar-amount animated" id="cmp-after" style="color:var(--deep)">85,120円/月</span>
+      </div>
+      <div class="rent-bar-track">
+        <div class="rent-bar-fill bar-after animated" id="bar-after" style="width:85.12%"></div>
+      </div>
+    </div>
+    <div class="premium-badge animated" id="premium-badge">月額 +9,120円 のプレミアム</div>
+  </div>
+
+  <!-- KPI CARDS -->
+  <div class="results-grid">
+    <div class="result-card">
+      <div class="rc-label">年間収益増加額</div>
+      <div class="rc-value animated" id="kpi-annual">109,440<span class="rc-unit">円/年</span></div>
+      <div class="rc-sub">賃料プレミアム＋空室減少効果</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">投資回収期間</div>
+      <div class="rc-value animated" id="kpi-payback">2.2<span class="rc-unit">年</span></div>
+      <div class="rc-sub">初期投資を回収するまでの期間</div>
+    </div>
+    <div class="result-card">
+      <div class="rc-label">IRR（内部収益率）</div>
+      <div class="rc-value animated" id="kpi-irr">45.5<span class="rc-unit">%</span></div>
+      <div class="rc-sub">4年間の投資収益率（参考値）</div>
+    </div>
+    <div class="result-card highlight">
+      <div class="rc-label">4年累計収益優位性</div>
+      <div class="rc-value animated" id="kpi-4yr">+437,760<span class="rc-unit">円</span></div>
+      <div class="rc-sub">競合物件比の累計差分</div>
+    </div>
+  </div>
+
+  <!-- 4-YEAR TIMELINE -->
+  <div class="timeline-card">
+    <div class="tl-title">4年間 累積収益優位性の推移</div>
+    <div class="tl-bars" id="tl-bars">
+      <!-- JS generates bar cols -->
+    </div>
+    <div class="tl-total">
+      <span class="tl-total-label">4年累計収益優位性</span>
+      <div>
+        <span class="tl-total-value animated" id="tl-total-val">+437,760</span>
+        <span class="tl-total-unit">円</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="disclaimer">
+    ※本シミュレーターは参考値の算出を目的としたものです。実際の収益は物件立地・築年数・設備グレード・市場状況により変動します。初期投資額には補助金の適用可能性があります（先進的窓リノベ2026等）。詳細はMarvelous Dinerにお問い合わせください。
+  </div>
+
+</div>
+
+<script>
+  // ── STATE ──
+  let state = { rent: 76000, prem: 12, inv: 800000, vac: 1.5 };
+  let activePreset = null;
+
+  function fmt(n) { return Math.round(n).toLocaleString('ja-JP'); }
+
+  function calc() {
+    const afterRent = state.rent * (1 + state.prem / 100);
+    const monthlyPremium = afterRent - state.rent;
+    // 空室減少：ペット需要でvac→vac*0.3と仮定
+    const vacReduction = state.rent * state.vac * 0.7;
+    const annualGain = monthlyPremium * 12 + vacReduction;
+    const payback = state.inv / annualGain;
+    // 簡易IRR（4年）：近似法
+    const irr = ((Math.pow((annualGain * 4) / state.inv + 1, 0.25) - 1) * 100);
+    // 4年累計優位性（初期投資を除いた純利益）
+    const yr = [annualGain, annualGain*2 - state.inv*0.5, annualGain*3 - state.inv*0.3, annualGain*4];
+    const total4yr = annualGain * 4;
+
+    return { afterRent, monthlyPremium, annualGain, payback, irr, yr, total4yr };
+  }
+
+  function updateSliderTrack(el) {
+    const min = +el.min, max = +el.max, val = +el.value;
+    const pct = ((val - min) / (max - min) * 100).toFixed(1) + '%';
+    el.style.setProperty('--pct', pct);
+  }
+
+  function updateUI() {
+    const r = calc();
+
+    // Slider displays
+    document.getElementById('disp-rent').innerHTML = fmt(state.rent) + '<span>円</span>';
+    document.getElementById('disp-prem').innerHTML = state.prem + '<span>%</span>';
+    document.getElementById('disp-inv').innerHTML  = fmt(state.inv)  + '<span>円</span>';
+    document.getElementById('disp-vac').innerHTML  = state.vac + '<span>ヶ月/年</span>';
+
+    // Rent comparison
+    document.getElementById('cmp-before').textContent = fmt(state.rent) + '円/月';
+    document.getElementById('cmp-after').textContent  = fmt(r.afterRent) + '円/月';
+    document.getElementById('premium-badge').textContent = '月額 +' + fmt(r.monthlyPremium) + '円 のプレミアム';
+
+    const base = Math.max(state.rent, r.afterRent);
+    document.getElementById('bar-before').style.width = (state.rent / base * 100).toFixed(1) + '%';
+    document.getElementById('bar-after').style.width  = (r.afterRent / base * 100).toFixed(1) + '%';
+
+    // KPIs
+    document.getElementById('kpi-annual').innerHTML  = fmt(r.annualGain) + '<span class="rc-unit">円/年</span>';
+    document.getElementById('kpi-payback').innerHTML = r.payback.toFixed(1) + '<span class="rc-unit">年</span>';
+    document.getElementById('kpi-irr').innerHTML     = r.irr.toFixed(1) + '<span class="rc-unit">%</span>';
+    document.getElementById('kpi-4yr').innerHTML     = '+' + fmt(r.total4yr) + '<span class="rc-unit">円</span>';
+
+    // Timeline bars
+    const maxY = Math.max(...r.yr.map(Math.abs)) || 1;
+    const barsHtml = r.yr.map((v, i) => {
+      const h = Math.abs(v) / maxY * 88;
+      const color = v >= 0
+        ? `linear-gradient(180deg, rgba(200,164,92,0.9), rgba(200,164,92,0.5))`
+        : `rgba(255,80,80,0.4)`;
+      return `<div class="tl-bar-col">
+        <div class="tl-bar-label">+${fmt(v)}</div>
+        <div class="tl-bar" style="height:${h}px;background:${color};"></div>
+        <div class="tl-year">${i+1}年目</div>
+      </div>`;
+    }).join('');
+    document.getElementById('tl-bars').innerHTML = barsHtml;
+    document.getElementById('tl-total-val').textContent = '+' + fmt(r.total4yr);
+  }
+
+  function onSlide() {
+    state.rent = +document.getElementById('sl-rent').value;
+    state.prem = +document.getElementById('sl-prem').value;
+    state.inv  = +document.getElementById('sl-inv').value;
+    state.vac  = +document.getElementById('sl-vac').value;
+    ['sl-rent','sl-prem','sl-inv','sl-vac'].forEach(id => updateSliderTrack(document.getElementById(id)));
+    updateUI();
+    clearPresets();
+  }
+
+  function applyPreset(rent, prem, inv) {
+    state = { rent, prem, inv, vac: 1.5 };
+    document.getElementById('sl-rent').value = rent;
+    document.getElementById('sl-prem').value = prem;
+    document.getElementById('sl-inv').value  = inv;
+    document.getElementById('sl-vac').value  = 1.5;
+    ['sl-rent','sl-prem','sl-inv','sl-vac'].forEach(id => updateSliderTrack(document.getElementById(id)));
+    updateUI();
+  }
+
+  function clearPresets() {
+    document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  }
+
+  // Init
+  ['sl-rent','sl-prem','sl-inv','sl-vac'].forEach(id => updateSliderTrack(document.getElementById(id)));
+  updateUI();
+</script>
+</body>
+</html>

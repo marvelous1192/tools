@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>不動産管理業務効率化シミュレーター</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#cc2929;--accent-dark:#a31f1f;--accent-light:#fdf0f0;--text:#1a1a1a;--text-sub:#555;--border:#e0e0e0;--radius:8px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:#f7f7f7;color:var(--text);font-size:14px;}
+.header{background:var(--text);color:#fff;padding:20px 28px;}
+.header h1{font-size:18px;font-weight:700;}
+.header p{font-size:12px;color:#aaa;margin-top:4px;}
+.container{max-width:800px;margin:28px auto;padding:0 20px 80px;}
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:24px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+.card h2{font-size:15px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:2px solid var(--accent);}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:18px;}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--text-sub);margin-bottom:5px;}
+.fg input,.fg select{width:100%;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:'Noto Sans JP',sans-serif;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--accent);}
+.btn{background:var(--accent);color:#fff;border:none;padding:11px 28px;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Noto Sans JP',sans-serif;cursor:pointer;}
+.btn:hover{background:var(--accent-dark);}
+.result{background:var(--accent-light);border:1px solid #f0c0c0;border-radius:var(--radius);padding:20px;margin-top:18px;display:none;}
+.result h3{font-size:12px;font-weight:700;color:var(--accent);margin-bottom:14px;letter-spacing:.05em;}
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;}
+.ri{background:#fff;border-radius:6px;padding:12px 14px;border:1px solid #f0c0c0;}
+.ri .rl{font-size:11px;color:var(--text-sub);margin-bottom:4px;}
+.ri .rv{font-size:20px;font-weight:700;color:var(--accent);}
+.ri .ru{font-size:11px;color:var(--text-sub);}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px;}
+th{background:var(--text);color:#fff;padding:9px 12px;text-align:left;font-weight:600;}
+td{padding:9px 12px;border-bottom:1px solid var(--border);}
+tr:nth-child(even) td{background:#fafafa;}
+.total td{font-weight:700;background:var(--accent-light);color:var(--accent);}
+.bar-wrap{margin:8px 0;}
+.bar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;}
+.bar-bg{background:#eee;height:8px;border-radius:4px;overflow:hidden;}
+.bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .5s ease;}
+.note{font-size:11px;color:var(--text-sub);margin-top:10px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>🏢 不動産管理業務効率化シミュレーター</h1>
+  <p>月間削減工数・年間コスト削減額をリアルタイム算出</p>
+</div>
+<div class="container">
+  <div class="card">
+    <h2>現状の業務コスト入力</h2>
+    <div class="form-grid">
+      <div class="fg"><label>管理物件数（棟）</label><input type="number" id="pm_buildings" value="15" min="1"></div>
+      <div class="fg"><label>管理戸数（戸）</label><input type="number" id="pm_units" value="200" min="1"></div>
+      <div class="fg"><label>月間業務工数（時間）</label><input type="number" id="pm_hours" value="320" min="1"></div>
+      <div class="fg"><label>担当者人件費（円/時間）</label><input type="number" id="pm_wage" value="2500" min="0"></div>
+      <div class="fg"><label>月間問い合わせ件数</label><input type="number" id="pm_inquiries" value="80" min="0"></div>
+      <div class="fg"><label>書類処理件数（件/月）</label><input type="number" id="pm_docs" value="120" min="0"></div>
+    </div>
+    <h2 style="margin-top:0">効率化シナリオ</h2>
+    <div class="form-grid">
+      <div class="fg"><label>工数削減率（%）</label><select id="pm_reduce">
+        <option value="30">30%削減（部分自動化）</option>
+        <option value="50" selected>50%削減（標準モデル）</option>
+        <option value="65">65%削減（フル活用）</option>
+      </select></div>
+      <div class="fg"><label>システム導入費（万円/月）</label><input type="number" id="pm_syscost" value="15" min="0"></div>
+    </div>
+    <button class="btn" onclick="calcPM()">効率化インパクトを算出</button>
+    <div class="result" id="pm_result"></div>
+    <p class="note">※工数▲65%・リードタイム▲57%は導入事例ベースの参考値です。実際の効果は運用体制により異なります。</p>
+  </div>
+</div>
+<script>
+function calcPM(){
+  const buildings=+document.getElementById('pm_buildings').value;
+  const units=+document.getElementById('pm_units').value;
+  const hours=+document.getElementById('pm_hours').value;
+  const wage=+document.getElementById('pm_wage').value;
+  const inquiries=+document.getElementById('pm_inquiries').value;
+  const docs=+document.getElementById('pm_docs').value;
+  const reduceRate=+document.getElementById('pm_reduce').value/100;
+  const syscost=+document.getElementById('pm_syscost').value;
+  const currentCost=Math.round(hours*wage/10000);
+  const savedHours=Math.round(hours*reduceRate);
+  const savedCost=Math.round(savedHours*wage/10000);
+  const netSaving=savedCost-syscost;
+  const annualNet=netSaving*12;
+  const perUnit=units>0?Math.round(savedCost*10000/units):0;
+  const roi=syscost>0?((savedCost/syscost-1)*100).toFixed(0):'-';
+  const el=document.getElementById('pm_result');
+  el.style.display='block';
+  el.innerHTML=`<h3>効率化インパクト試算</h3>
+  <div class="rg">
+    <div class="ri"><div class="rl">月間削減工数</div><div class="rv">${savedHours}<span style="font-size:13px">時間</span></div></div>
+    <div class="ri"><div class="rl">月間削減コスト（粗）</div><div class="rv">${savedCost}<span style="font-size:13px">万円</span></div></div>
+    <div class="ri"><div class="rl">システム費差引後</div><div class="rv">${netSaving}<span style="font-size:13px">万円/月</span></div></div>
+    <div class="ri"><div class="rl">年間純削減額</div><div class="rv">${annualNet}<span style="font-size:13px">万円/年</span></div></div>
+    <div class="ri"><div class="rl">戸当たり削減コスト</div><div class="rv">${perUnit.toLocaleString()}<span style="font-size:13px">円/戸</span></div></div>
+    <div class="ri"><div class="rl">投資対効果（月次）</div><div class="rv">${roi}<span style="font-size:13px">%</span></div></div>
+  </div>
+  <div class="bar-wrap" style="margin-top:16px">
+    <div class="bar-label"><span>現在の業務工数</span><span>${hours}時間/月</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:100%"></div></div>
+    <div class="bar-label" style="margin-top:8px"><span>効率化後の工数</span><span>${hours-savedHours}時間/月</span></div>
+    <div class="bar-bg"><div class="bar-fill" style="width:${(1-reduceRate)*100}%;background:#666"></div></div>
+  </div>`;
+}
+</script>
+</body>
+</html>
